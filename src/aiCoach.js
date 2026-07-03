@@ -1,5 +1,5 @@
 const strongEvidenceByType = {
-  'Account Takeover': ['Login History', 'Device Fingerprint', 'IP Lookup', 'MFA History', 'Password Reset History'],
+  'Account Takeover': ['Login History', 'Profile Change History', 'Session History', 'Device Fingerprint', 'IP Lookup', 'MFA History', 'Password Reset History'],
   'First-Party Fraud': ['Merchant Evidence', 'Shipping Records', 'Previous Claims', 'Proof of Delivery', 'Merchant Receipt'],
   Chargeback: ['Transaction History With Merchant', 'Authorization Review', 'Merchant Evidence', 'Reason Code Guide', 'Customer Statement'],
   'Credit Risk': ['Income Verification', 'Employment Verification', 'Debt-to-Income Calculator', 'Credit Report Summary', 'Cash Flow Review', 'Bank Statements'],
@@ -9,11 +9,11 @@ const strongEvidenceByType = {
 
 const riskPatterns = {
   'Account Takeover': {
-    red: ['new device', 'new network', 'password reset', 'profile change', 'otp', 'mfa', 'newly added phone'],
+    red: ['new device', 'new network', 'password reset', 'profile change', 'session behavior', 'otp', 'mfa', 'newly added phone'],
     green: ['trusted device', 'normal customer region', 'no risky profile change', 'known behavior'],
     misleading: 'A passed MFA challenge can look legitimate, but it can still be part of social engineering if the contact method changed first.',
-    seniorTip: 'A senior investigator builds the event order first: login, profile change, MFA, device enrollment, and loss event.',
-    skills: ['ATO timeline review', 'Device and network analysis', 'MFA control review'],
+    seniorTip: 'A senior investigator builds the event order first: login, profile change, session activity, MFA, device enrollment, and loss event.',
+    skills: ['ATO login timeline review', 'Profile-change and session review', 'Device and network analysis'],
   },
   'First-Party Fraud': {
     red: ['proof of delivery', 'prior claims', 'repeated', 'signed proof', 'delivery photo', 'merchant evidence'],
