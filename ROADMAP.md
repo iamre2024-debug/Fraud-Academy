@@ -16,9 +16,10 @@ When the user says **run**, run the Fraud Academy Builder workflow:
 - [x] Add AI Coach Debrief that explains judgment, evidence, missed checks, and senior-investigator reasoning.
 - [x] Start Document Viewer 2.0 with richer fictional reports, notes, confidence, and training tips.
 - [x] Start Interview 2.0 with claim-specific answers, tone, credibility, and clues.
+- [x] Split Account Takeover tools into Login History, Profile Change History, and Session History.
 - [ ] Make active Toolkit selection visibly highlighted with stronger styling without changing the layout.
 - [ ] Expand Document Viewer 2.0 with more document-specific templates for every requested record.
-- [ ] Upgrade Customer 360 with relationship age, prior cases, accounts, trusted devices, contact history, and behavioral profile.
+- [ ] Upgrade Customer 360 with relationship age, prior cases, accounts, trusted devices, contact history, profile change history, and behavioral profile.
 - [ ] Upgrade Identity Intel with tabbed results: Overview, Addresses, Phones, Emails, Associates, Applications, Alerts, and Documents.
 - [ ] Upgrade Interview into a deeper branching conversation by claim type.
 - [ ] Improve Case Debrief so it references the exact flags, tools, documents, and interview answers the user reviewed.
@@ -40,4 +41,4 @@ Fraud Academy should feel like a fictional internal bank fraud investigator work
 - Business Verification / KYB
 
 ## Next Builder Step
-Keep the layout as-is. Next, polish the active Toolkit selected-state styling, then add more document templates and expand Customer 360.
+Keep the layout as-is. Next, polish the active Toolkit selected-state styling, then expand Customer 360 with account/client history sections.
