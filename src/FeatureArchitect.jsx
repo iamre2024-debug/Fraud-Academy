@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import './FeatureArchitect.css';
 
 const steps = [
   { key: 'identity', label: 'Feature', icon: '✨' },
