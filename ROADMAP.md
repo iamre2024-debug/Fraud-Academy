@@ -14,9 +14,10 @@ When the user says **run**, run the Fraud Academy Builder workflow:
 - [x] Keep case queue, Customer 360, Identity Intel, Toolkit, Documents, Interview, Flags & Decision, Case Debrief, and Encyclopedia.
 - [x] Upgrade Toolkit results from generic text to detailed fictional records.
 - [x] Add AI Coach Debrief that explains judgment, evidence, missed checks, and senior-investigator reasoning.
-- [ ] Make active Toolkit selection visibly highlighted without changing the layout.
-- [ ] Add richer document chips/cards from Toolkit results that open the Document Viewer.
-- [ ] Upgrade Document Viewer so each document looks like a detailed fictional record instead of a simple placeholder.
+- [x] Start Document Viewer 2.0 with richer fictional reports, notes, confidence, and training tips.
+- [x] Start Interview 2.0 with claim-specific answers, tone, credibility, and clues.
+- [ ] Make active Toolkit selection visibly highlighted with stronger styling without changing the layout.
+- [ ] Expand Document Viewer 2.0 with more document-specific templates for every requested record.
 - [ ] Upgrade Customer 360 with relationship age, prior cases, accounts, trusted devices, contact history, and behavioral profile.
 - [ ] Upgrade Identity Intel with tabbed results: Overview, Addresses, Phones, Emails, Associates, Applications, Alerts, and Documents.
 - [ ] Upgrade Interview into a deeper branching conversation by claim type.
@@ -39,4 +40,4 @@ Fraud Academy should feel like a fictional internal bank fraud investigator work
 - Business Verification / KYB
 
 ## Next Builder Step
-Keep the layout as-is. Next, make the active Toolkit selection visibly highlighted and then upgrade the Document Viewer into richer fictional records.
+Keep the layout as-is. Next, polish the active Toolkit selected-state styling, then add more document templates and expand Customer 360.
