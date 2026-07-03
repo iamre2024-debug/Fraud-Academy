@@ -13,6 +13,7 @@
 - Added Toolkit-related document opening flow.
 - Added stronger mobile command-center styling.
 - Added `ROADMAP.md` for future builder runs.
+- Added AI Coach Debrief through `src/aiCoach.js` to explain whether the user's judgment matched, why it was right or wrong, what evidence was missed, and what a senior investigator would check next.
 
 ### Fixed
 - Fixed case selection flow.
@@ -20,4 +21,4 @@
 - Improved mobile responsiveness and visual polish.
 
 ### Current Next Step
-Rebuild the Investigation Toolkit screen into grouped v14-style sections while keeping the detailed toolkit record results working.
+Keep the current layout stable. Next, deepen the existing screens with Document Viewer 2.0, better Customer 360 records, and stronger evidence matching in Case Debrief.
