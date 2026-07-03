@@ -1,259 +1,85 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BadgeCheck, BookOpenCheck, FileSearch, Home, MessageCircle, Plus, Search, ShieldAlert, Sparkles, Trophy, UserRoundSearch } from 'lucide-react';
 
-const STORAGE_KEY = 'fraud-academy-v2';
+const STORE = 'fraud-academy-v15-stable';
+const pages = ['Dashboard', 'Case Queue', 'Customer 360', 'Identity Intel', 'Investigation Toolkit', 'Documents', 'Interview', 'Flags & Decision', 'Case Debrief', 'Encyclopedia'];
+const icons = ['📊', '📥', '👤', '🛰️', '🧰', '📄', '🎤', '⚖️', '📖', '📚'];
+const names = ['Maya Carter', 'Jordan Ellis', 'Tanya Brooks', 'Darius Hill', 'Alicia Monroe', 'Keisha Grant', 'Noah Pierce', 'Monica Wells'];
+const types = ['Account Takeover', 'First-Party Fraud', 'Chargeback', 'Credit Risk', 'Application Verification', 'Email Fraud / BEC'];
+const merchants = ['NorthStar Electronics', 'Velora Boutique', 'Metro Wireless', 'Luna Travel', 'Crown Payroll', 'QuickShip Market'];
+const decisions = ['Approve / Pay', 'Deny', 'Partial Credit', 'Escalate', 'Request More Info'];
 
-const decisions = {
-  approve: 'Approve claim',
-  deny: 'Deny claim',
-  partial: 'Partial credit',
-  escalate: 'Escalate review',
+const typeData = {
+  'Account Takeover': { summary: 'Unauthorized activity after password reset, new device login, and profile changes.', correct: 'Approve / Pay', tools: ['Login History', 'Device Fingerprint', 'IP Lookup', 'MFA History', 'Password Reset History', 'Transaction History'], questions: ['Did you approve a new device?', 'Did you receive password or MFA alerts?', 'Did anyone have access to your email or phone?'] },
+  'First-Party Fraud': { summary: 'Customer claims non-receipt, but merchant evidence may support delivery.', correct: 'Deny', tools: ['Merchant Evidence', 'Shipping Records', 'Previous Claims', 'Chargeback History', 'Customer Statement'], questions: ['Did anyone at your address receive the item?', 'Did the merchant provide tracking?', 'Have you filed similar claims before?'] },
+  Chargeback: { summary: 'Cardholder disputes a transaction while merchant says customer participated.', correct: 'Partial Credit', tools: ['Transaction History With Merchant', 'Prior Customer Calls', 'Order Match Review', 'Authorization Review', 'Merchant Evidence', 'Reason Code Guide'], questions: ['Do you recognize this merchant?', 'Did you contact the merchant first?', 'Does the shipping address belong to you?'] },
+  'Credit Risk': { summary: 'Applicant requests credit. Income, employment, and cash flow require review.', correct: 'Escalate', tools: ['Income Verification', 'Employment Verification', 'Debt-to-Income Calculator', 'Credit Report Summary', 'Cash Flow Review', 'Bank Statements'], questions: ['What is your employer and start date?', 'Is your income gross or net?', 'Can you provide paystubs and bank statements?'] },
+  'Application Verification': { summary: 'New application triggered identity, device, and document review.', correct: 'Request More Info', tools: ['SSN Verify', 'Driver License Review', 'Selfie Verification', 'Address Verification', 'Phone Verification', 'Device Fingerprint'], questions: ['Did you submit this application?', 'Can you confirm current and previous address?', 'Can you complete selfie verification?'] },
+  'Email Fraud / BEC': { summary: 'Payment instructions changed after a spoofed vendor email.', correct: 'Approve / Pay', tools: ['Email Headers', 'Domain Lookup', 'Sender Analysis', 'Beneficiary Review', 'Payment Timeline', 'Wire History'], questions: ['Who requested the payment change?', 'Was the change confirmed by phone?', 'Was this beneficiary used before?'] },
 };
 
-const templates = [
-  {
-    type: 'ATO',
-    domain: 'Fraud Claim',
-    title: 'Midnight Wallet Takeover',
-    customer: 'Maya Bennett',
-    amount: 1284.76,
-    priority: 'High',
-    correctDecision: 'approve',
-    summary: 'Six digital gift-card transactions hit minutes after a password reset and new device enrollment.',
-    evidence: ['Password reset from Denver while customer is in Dallas.', 'Device changed from Pixel 7 to iPhone 16 Pro.', 'SMS OTP was entered, but no biometric login followed.', 'Customer passed phone verification and reports a fake bank text.', 'Purchases were rapid digital gift cards with same cart values.'],
-    toolkit: [['Device fingerprint', 'First-seen iPhone 16 Pro. No prior relationship to customer profile.'], ['IP intelligence', 'Residential proxy signal high. Distance mismatch 770 miles.'], ['Auth trail', 'Password reset, new device, wallet token, then purchases in under one hour.'], ['Merchant risk', 'Digital delivery gift cards, no shipping recovery path.']],
-    documents: [['Login Timeline', '01:12 reset | 01:38 device enrollment | 02:04 wallet token | 02:11 first purchase'], ['Network Report', 'Proxy confidence high. IP location: Denver, CO. Customer home area: Dallas, TX.'], ['Customer Affidavit', 'Customer denies activity and describes phishing-style SMS before takeover.']],
-    interview: [['Did you approve the new device?', 'No. I only use my Pixel and never added an iPhone.'], ['Did anything happen before the charges?', 'I got a text that looked like the bank and clicked it.'], ['Where was your phone?', 'In my purse at work. It was not lost.']],
-  },
-  {
-    type: 'Email Fraud',
-    domain: 'Fraud Claim',
-    title: 'Payroll Redirect Trap',
-    customer: 'Northlake Dental Group',
-    amount: 6425.22,
-    priority: 'Critical',
-    correctDecision: 'approve',
-    summary: 'A business client sent payroll to a new ACH account after receiving a spoofed vendor email.',
-    evidence: ['Sender domain uses rn instead of m.', 'Receiving account opened eight days ago.', 'Callback verification was skipped.', 'Email copied wording from a legitimate vendor thread.', 'Receiving bank has three similar complaints this week.'],
-    toolkit: [['Header check', 'SPF softfail and DKIM missing. Reply-to differs from display sender.'], ['ACH receiver', 'New account, first large credit, quick outbound attempts.'], ['Control failure', 'Payment instruction change approved by email only.'], ['Linked claims', 'Same receiving bank appears in multiple payroll redirect cases.']],
-    documents: [['Email Header', 'Lookalike domain, privacy masked registration, no normal mail history.'], ['ACH Detail', 'First incoming credit followed by outbound transfer attempts.'], ['Vendor Statement', 'Legitimate vendor confirms no bank-change request.']],
-    interview: [['Who requested the change?', 'It looked like our staffing vendor. The address was barely different.'], ['Was it confirmed by phone?', 'No. We were closing payroll and I rushed it.'], ['Had you paid this account before?', 'Never.']],
-  },
-  {
-    type: 'First Party Fraud',
-    domain: 'Fraud Claim',
-    title: 'Luxury Bag Non-Receipt',
-    customer: 'Darius Cole',
-    amount: 2199.99,
-    priority: 'Medium',
-    correctDecision: 'deny',
-    summary: 'Customer disputes a delivered designer bag even though merchant evidence strongly supports delivery.',
-    evidence: ['Delivery photo shows customer porch and house number.', 'Carrier GPS scan is within 18 feet of billing address.', 'Signed delivery confirmation uses customer last name.', 'Three non-receipt claims in 74 days.', 'Social post appears to show the same bag after delivery.'],
-    toolkit: [['Carrier trace', 'GPS, scan time, and route support successful delivery.'], ['Claim history', 'Repeated high-value non-receipt claims across fashion merchants.'], ['Open-source note', 'Public image appears to show disputed item after delivery date.'], ['Representment packet', 'AVS match, proof of delivery, customer account login before order.']],
-    documents: [['Proof of Delivery', 'Photo, timestamp, GPS, and house number align with billing address.'], ['Merchant Packet', 'AVS match, signed delivery, order email, and login history.'], ['Claim Pattern Memo', 'Repeated luxury non-receipt disputes in short window.']],
-    interview: [['Do you recognize the porch?', 'That looks like my porch, but someone could have taken it.'], ['Did you contact the merchant?', 'No, I wanted the bank to handle it.'], ['Any recent delivery issues?', 'Yes, a few packages have gone missing.']],
-  },
-  {
-    type: 'Chargeback Claim',
-    domain: 'Fraud Claim',
-    title: 'Subscription Renewal Fight',
-    customer: 'Priya Shah',
-    amount: 349,
-    priority: 'Low',
-    correctDecision: 'partial',
-    summary: 'Customer canceled after renewal, but stopped using the product immediately and merchant offered prorated credit.',
-    evidence: ['Terms require cancelation three days before renewal.', 'Cancelation request came one day after renewal.', 'No software usage after cancelation request.', 'Merchant offered ten-month prorated refund.', 'Renewal notices were delivered to email on file.'],
-    toolkit: [['Network rule check', 'Full reversal is weak, but unused service supports partial resolution.'], ['Terms review', 'Auto-renewal disclosed at checkout and reminder email.'], ['Usage logs', 'No usage after cancelation request.'], ['Resolution path', 'Accept prorated merchant refund and document customer agreement.']],
-    documents: [['Subscription Terms', 'Annual renewal unless canceled at least three days prior.'], ['Support Chat', 'Customer requested cancelation after renewal posted.'], ['Refund Offer', 'Merchant offers ten-month prorated refund.']],
-    interview: [['When did you cancel?', 'The morning after I saw the charge.'], ['Did you get notices?', 'Probably, but they went to an old folder.'], ['Would you accept prorated credit?', 'Yes, I just do not want to pay for a full year.']],
-  },
-  {
-    type: 'Credit Risk',
-    domain: 'Credit Risk Claim',
-    title: 'Thin-File Line Increase',
-    customer: 'Horizon Event Rentals LLC',
-    amount: 25000,
-    priority: 'High',
-    correctDecision: 'escalate',
-    summary: 'New business requests a large credit line increase after fast deposits and rising utilization.',
-    evidence: ['Business registered 69 days ago.', 'Deposits concentrated from two related counterparties.', 'Utilization jumped from 12% to 91%.', 'Owner has recent credit inquiries.', 'Website photos appear copied from another company.'],
-    toolkit: [['KYB review', 'Active entity, but short operating history and thin file.'], ['Cash-flow review', 'Deposits are concentrated and relationship-linked.'], ['Exposure review', 'Rapid utilization spike creates bust-out risk.'], ['Verification needs', 'Request contracts, invoices, inventory proof, insurance, and guaranty review.']],
-    documents: [['KYB Snapshot', 'Active LLC, new formation, owner identity verified.'], ['Bank Review', 'Two related deposits make up most observed inflow.'], ['Credit Memo', 'Manual underwriting recommended before exposure increase.']],
-    interview: [['Why increase now?', 'We booked summer events and need inventory quickly.'], ['Can you provide contracts?', 'I can send screenshots today and formal contracts later.'], ['Are the depositors related?', 'One is my cousin helping startup funding.']],
-  },
-];
-
-const tabs = [
-  ['Home', Home],
-  ['Case', ShieldAlert],
-  ['Toolkit', UserRoundSearch],
-  ['Docs', FileSearch],
-  ['Interview', MessageCircle],
-  ['Debrief', BookOpenCheck],
-  ['Stats', Trophy],
-];
-
-function makeCase(template, index = 0) {
-  return { ...template, id: `${template.type.slice(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}-${index + 1}`, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) };
+function makeCase(i) {
+  const type = types[i % types.length];
+  return {
+    id: `FA-2026-${1000 + i}`,
+    type,
+    customer: names[i % names.length],
+    merchant: merchants[i % merchants.length],
+    amount: Math.round(300 + ((i * 311) % 9500)),
+    risk: i % 5 === 0 ? 'High' : i % 2 === 0 ? 'Medium' : 'Low',
+    priority: i % 5 === 0 ? 'Critical' : i % 2 === 0 ? 'High' : 'Medium',
+    address: `${7000 + i * 14} Violet Trace, Dallas, TX`,
+    phone: `(214) 555-${String(1000 + i * 47).slice(0, 4)}`,
+    email: `${names[i % names.length].toLowerCase().replace(' ', '.')}@examplemail.com`,
+    dob: `19${80 + (i % 18)}-0${(i % 9) + 1}-${String((i % 27) + 1).padStart(2, '0')}`,
+    ssn: `***-**-${String(4000 + i * 9).slice(0, 4)}`,
+    device: `DEV-${90000 + i * 41}`,
+    ip: `172.${16 + i}.${30 + i}.${40 + i}`,
+    opened: `2026-07-${String((i % 28) + 1).padStart(2, '0')}`,
+    ...typeData[type],
+  };
 }
 
-function freshProgress() {
-  return { activeCases: templates.map(makeCase), completedCases: [], notes: {}, decisions: {}, xp: 0, correct: 0, total: 0 };
+function initial() {
+  return { page: 'Dashboard', cases: Array.from({ length: 24 }, (_, i) => makeCase(i)), selectedId: 'FA-2026-1000', notes: [], flags: [], docs: [], interview: [], reviewed: [], decision: '', completed: [], lastClosed: null, toolResult: null, intelResult: null };
 }
-
-function loadProgress() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved?.activeCases) return saved;
-  } catch {}
-  return freshProgress();
-}
+function load() { try { return JSON.parse(localStorage.getItem(STORE)) || initial(); } catch { return initial(); } }
 
 export default function App() {
-  const [progress, setProgress] = useState(loadProgress);
-  const [page, setPage] = useState('Home');
-  const [selectedId, setSelectedId] = useState(progress.activeCases[0]?.id);
-  const selectedCase = useMemo(() => progress.activeCases.find((item) => item.id === selectedId) || progress.activeCases[0], [progress.activeCases, selectedId]);
-  const notes = selectedCase ? progress.notes[selectedCase.id] || '' : '';
-  const decision = selectedCase ? progress.decisions[selectedCase.id] || '' : '';
-  const accuracy = progress.total ? Math.round((progress.correct / progress.total) * 100) : 0;
-  const level = Math.floor(progress.xp / 100) + 1;
-
-  useEffect(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)), [progress]);
-
-  function openCase(item, target = 'Case') {
-    setSelectedId(item.id);
-    setPage(target);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function generateCase() {
-    const template = templates[(progress.activeCases.length + progress.completedCases.length) % templates.length];
-    const next = makeCase(template, progress.activeCases.length);
-    setProgress((current) => ({ ...current, activeCases: [next, ...current.activeCases] }));
-    openCase(next, 'Case');
-  }
-
-  function saveNotes(value) {
-    if (!selectedCase) return;
-    setProgress((current) => ({ ...current, notes: { ...current.notes, [selectedCase.id]: value } }));
-  }
-
-  function chooseDecision(value) {
-    if (!selectedCase) return;
-    setProgress((current) => ({ ...current, decisions: { ...current.decisions, [selectedCase.id]: value } }));
-  }
-
-  function completeCase() {
-    if (!selectedCase || !decision) return;
-    const correct = decision === selectedCase.correctDecision;
-    const closed = { ...selectedCase, traineeDecision: decision, correct, notes, closedAt: new Date().toLocaleString() };
-    const remaining = progress.activeCases.filter((item) => item.id !== selectedCase.id);
-    setProgress((current) => ({ ...current, activeCases: remaining, completedCases: [closed, ...current.completedCases], xp: current.xp + (correct ? 75 : 35), correct: current.correct + (correct ? 1 : 0), total: current.total + 1 }));
-    setSelectedId(remaining[0]?.id);
-    setPage('Debrief');
-  }
-
-  return (
-    <div className="phone-app">
-      <header className="app-hero">
-        <div className="hero-glow" />
-        <div className="brand-row">
-          <div className="brand-icon"><Search size={24} /></div>
-          <div>
-            <p className="eyebrow">Fraud Ops Training</p>
-            <h1>Fraud Academy</h1>
-          </div>
-        </div>
-        <div className="hero-copy">
-          <h2>Case Lab</h2>
-          <p>Tap a claim, inspect the evidence, make your call, and debrief like a real investigator.</p>
-        </div>
-        <div className="stat-strip">
-          <MiniStat label="Level" value={level} />
-          <MiniStat label="XP" value={progress.xp} />
-          <MiniStat label="Accuracy" value={`${accuracy}%`} />
-        </div>
-      </header>
-
-      <main className="screen-card">
-        {page === 'Home' && <HomeScreen activeCases={progress.activeCases} completed={progress.completedCases.length} openCase={openCase} generateCase={generateCase} />}
-        {page !== 'Home' && page !== 'Stats' && !selectedCase && <Empty generateCase={generateCase} />}
-        {selectedCase && page === 'Case' && <CaseScreen item={selectedCase} notes={notes} decision={decision} saveNotes={saveNotes} chooseDecision={chooseDecision} completeCase={completeCase} />}
-        {selectedCase && page === 'Toolkit' && <RecordScreen item={selectedCase} title="Investigation Toolkit" rows={selectedCase.toolkit} icon={<UserRoundSearch />} />}
-        {selectedCase && page === 'Docs' && <RecordScreen item={selectedCase} title="Document Viewer" rows={selectedCase.documents} icon={<FileSearch />} document />}
-        {selectedCase && page === 'Interview' && <Interview item={selectedCase} />}
-        {selectedCase && page === 'Debrief' && <Debrief item={selectedCase} notes={notes} decision={decision} />}
-        {page === 'Stats' && <Stats progress={progress} accuracy={accuracy} level={level} />}
-      </main>
-
-      <nav className="bottom-tabs" aria-label="Fraud Academy navigation">
-        {tabs.map(([name, Icon]) => (
-          <button key={name} className={page === name ? 'tab active' : 'tab'} onClick={() => setPage(name)}>
-            <Icon size={18} />
-            <span>{name}</span>
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
+  const [s, setS] = useState(load);
+  const c = useMemo(() => s.cases.find(x => x.id === s.selectedId) || s.cases[0] || s.lastClosed, [s]);
+  useEffect(() => localStorage.setItem(STORE, JSON.stringify(s)), [s]);
+  const patch = (x) => setS(v => ({ ...v, ...x }));
+  const page = (p) => patch({ page: p });
+  const mark = (x) => setS(v => ({ ...v, reviewed: [...new Set([...v.reviewed, x])] }));
+  const flag = (kind, text) => setS(v => ({ ...v, flags: [...v.flags, { kind, text, at: new Date().toLocaleTimeString() }] }));
+  const note = (text) => setS(v => ({ ...v, notes: [...v.notes, text] }));
+  const doc = (d) => setS(v => ({ ...v, docs: [...new Set([...v.docs, d])] }));
+  const select = (id) => patch({ selectedId: id, page: 'Case Queue', notes: [], flags: [], docs: [], interview: [], reviewed: [], decision: '', toolResult: null, intelResult: null });
+  const complete = () => {
+    if (!c || !s.decision) return;
+    const score = Math.min(100, s.flags.length * 10 + s.reviewed.length * 5 + s.docs.length * 7 + s.interview.length * 4 + (s.decision === c.correct ? 20 : 0));
+    const closed = { ...c, decision: s.decision, score, flags: s.flags, docs: s.docs, notes: s.notes, interview: s.interview, closedAt: new Date().toLocaleString() };
+    const remaining = s.cases.filter(x => x.id !== c.id);
+    setS({ ...s, cases: remaining, selectedId: remaining[0]?.id || '', completed: [closed, ...s.completed], lastClosed: closed, page: 'Case Debrief', notes: [], flags: [], docs: [], interview: [], reviewed: [], decision: '', toolResult: null, intelResult: null });
+  };
+  const props = { s, c, patch, page, mark, flag, note, doc, select, complete };
+  return <div className="app"><aside className="side"><div className="brand"><div className="logo">🕵🏽</div><div><h1>Fraud Academy</h1><p>Cozy Detective Command Center</p></div></div><nav className="nav">{pages.map((p, i) => <button key={p} className={s.page === p ? 'active' : ''} onClick={() => page(p)}>{icons[i]} {p}</button>)}</nav><div className="card mini"><b>🕒 SLA Clock</b><p className="muted">{c ? `${c.priority} priority case` : 'Queue cleared'}</p><div className="progress"><div className="bar" style={{ width: c?.priority === 'Critical' ? '84%' : '48%' }} /></div></div></aside><main className="main"><div className="top"><div><h2>{s.page}</h2><div className="muted">Find flags, tag evidence, make a decision, then debrief.</div></div><span className="pill">💜 v15 Command Center</span></div>{s.page === 'Dashboard' && <Dashboard {...props} />}{s.page === 'Case Queue' && <Queue {...props} />}{s.page === 'Customer 360' && <Customer {...props} />}{s.page === 'Identity Intel' && <Intel {...props} />}{s.page === 'Investigation Toolkit' && <Toolkit {...props} />}{s.page === 'Documents' && <Documents {...props} />}{s.page === 'Interview' && <Interview {...props} />}{s.page === 'Flags & Decision' && <Decision {...props} />}{s.page === 'Case Debrief' && <Debrief {...props} />}{s.page === 'Encyclopedia' && <Encyclopedia />}</main></div>;
 }
 
-function HomeScreen({ activeCases, completed, openCase, generateCase }) {
-  const fraudCount = activeCases.filter((item) => item.domain === 'Fraud Claim').length;
-  const creditCount = activeCases.filter((item) => item.domain === 'Credit Risk Claim').length;
-  return <section className="stack fade-in">
-    <div className="section-title"><div><p className="eyebrow">Active Queue</p><h3>{activeCases.length} investigations</h3></div><button className="pill-button" onClick={generateCase}><Plus size={16} /> New</button></div>
-    <div className="quick-grid"><MiniStat label="Fraud" value={fraudCount} /><MiniStat label="Credit Risk" value={creditCount} /><MiniStat label="Closed" value={completed} /></div>
-    <div className="case-rail">
-      {activeCases.map((item) => <button key={item.id} className="claim-card" onClick={() => openCase(item)}>
-        <span className={item.domain === 'Credit Risk Claim' ? 'tag credit' : 'tag'}>{item.domain}</span>
-        <h4>{item.title}</h4>
-        <p>{item.customer}</p>
-        <div className="claim-foot"><strong>${item.amount.toLocaleString()}</strong><span>{item.priority}</span><span>{item.type}</span></div>
-      </button>)}
-    </div>
-  </section>;
-}
-
-function CaseScreen({ item, notes, decision, saveNotes, chooseDecision, completeCase }) {
-  return <section className="stack fade-in"><CaseHeader item={item} />
-    <Panel title="Evidence Board">{item.evidence.map((line, index) => <div className="evidence-row" key={line}><b>{index + 1}</b><span>{line}</span></div>)}</Panel>
-    <Panel title="Case Notes"><textarea value={notes} onChange={(event) => saveNotes(event.target.value)} placeholder="Write the facts that support your decision..." />
-      <div className="decision-grid">{Object.entries(decisions).map(([key, label]) => <button key={key} className={decision === key ? 'choice active' : 'choice'} onClick={() => chooseDecision(key)}>{label}</button>)}</div>
-      <button className="complete" disabled={!decision} onClick={completeCase}>Complete case</button>
-    </Panel>
-  </section>;
-}
-
-function RecordScreen({ item, title, rows, icon, document }) {
-  return <section className="stack fade-in"><CaseHeader item={item} /><div className="section-title"><div className="title-chip">{icon}<h3>{title}</h3></div></div>
-    {rows.map(([name, detail]) => <article className={document ? 'doc-page' : 'record-card'} key={name}><p className="eyebrow">{name}</p><p>{detail}</p></article>)}
-  </section>;
-}
-
-function Interview({ item }) {
-  return <section className="stack fade-in"><CaseHeader item={item} /><Panel title="Customer Interview">{item.interview.map(([q, a]) => <div className="chat-pair" key={q}><p className="agent">Investigator: {q}</p><p className="customer">Customer: {a}</p></div>)}</Panel></section>;
-}
-
-function Debrief({ item, notes, decision }) {
-  const noteWords = notes.toLowerCase();
-  const matched = item.evidence.filter((line) => line.toLowerCase().split(' ').some((word) => word.length > 6 && noteWords.includes(word.replace(/[^a-z0-9]/g, ''))));
-  return <section className="stack fade-in"><CaseHeader item={item} />
-    <Panel title="Case Debrief"><div className="verdict"><BadgeCheck /><div><p className="eyebrow">Recommended Outcome</p><h3>{decisions[item.correctDecision]}</h3></div></div><p>{decision ? `Your call: ${decisions[decision]}.` : 'Choose a decision in Case Lab to compare your answer.'}</p></Panel>
-    <Panel title="Evidence That Matters">{item.evidence.map((line) => <div className="evidence-row" key={line}><Sparkles size={16} /><span>{line}</span></div>)}</Panel>
-    <Panel title="Notes Check"><p>{matched.length ? `Your notes connect to ${matched.length} evidence point(s).` : 'Your notes need stronger evidence references before closing.'}</p></Panel>
-  </section>;
-}
-
-function Stats({ progress, accuracy, level }) {
-  return <section className="stack fade-in"><div className="quick-grid"><MiniStat label="Level" value={level} /><MiniStat label="XP" value={progress.xp} /><MiniStat label="Accuracy" value={`${accuracy}%`} /></div><Panel title="Closed Cases">{progress.completedCases.length ? progress.completedCases.map((item) => <div className="history" key={`${item.id}-${item.closedAt}`}><strong>{item.title}</strong><span className={item.correct ? 'good' : 'review'}>{item.correct ? 'Correct' : 'Review'}</span><small>{decisions[item.traineeDecision]} • {item.closedAt}</small></div>) : <p>No cases closed yet.</p>}</Panel></section>;
-}
-
-function CaseHeader({ item }) {
-  return <article className="case-header"><div><span className={item.domain === 'Credit Risk Claim' ? 'tag credit' : 'tag'}>{item.domain}</span><h3>{item.title}</h3><p>{item.summary}</p></div><div className="exposure"><span>Exposure</span><strong>${item.amount.toLocaleString()}</strong></div></article>;
-}
-
-function Panel({ title, children }) { return <article className="panel"><h3>{title}</h3><div className="panel-body">{children}</div></article>; }
-function MiniStat({ label, value }) { return <div className="mini-stat"><span>{label}</span><strong>{value}</strong></div>; }
-function Empty({ generateCase }) { return <section className="empty"><h3>No active case selected</h3><p>Generate a new case to keep practicing.</p><button className="pill-button" onClick={generateCase}><Plus size={16} /> Generate case</button></section>; }
+function Dashboard({ s, c, page, patch }) { return <div className="grid"><div className="grid three"><Stat label="Open Cases" val={s.cases.length} /><Stat label="Completed" val={s.completed.length} /><Stat label="Current" val={c?.id || 'None'} /></div><div className="grid cols"><div className="card"><h3>💜 Cozy Detective Theme</h3><p>v15 brings back the old command-center flow: case queue, customer 360, identity intel, toolkit, documents, interview, flags, decision, and debrief.</p><div className="row"><button className="btn" onClick={() => page('Case Queue')}>Open Queue</button><button className="btn secondary" onClick={() => patch(initial())}>Reset Training</button></div></div><div className="card"><h3>🎲 Random Case Event</h3><p className="muted">Add a surprise evidence update to your notes.</p><button className="btn gold" onClick={() => patch({ notes: [...s.notes, 'Random event: new merchant packet and customer statement arrived.'] })}>Trigger Event</button></div></div>{s.completed.length > 0 && <div className="card"><h3>✅ Recently Completed</h3>{s.completed.slice(0, 5).map(x => <div className="result good" key={x.id}><b>{x.id}</b> · {x.type}<br /><span className="muted">Decision: {x.decision} · Score: {x.score}%</span></div>)}</div>}</div>; }
+function Stat({ label, val }) { return <div className="card"><div className="muted">{label}</div><div className="stat">{val}</div></div>; }
+function Queue({ s, c, select, page }) { if (!s.cases.length) return <div className="card"><h3>🎉 Queue Cleared</h3><p>All cases are complete.</p></div>; return <div className="split"><div className="card"><h3>📥 Claim Queue ({s.cases.length})</h3>{s.cases.map(x => <button className={c?.id === x.id ? 'case active' : 'case'} key={x.id} onClick={() => select(x.id)}><div className="case-title"><span>{x.id}</span><span className={`tag risk-${x.risk.toLowerCase()}`}>{x.priority}</span></div><div>{x.customer}</div><div className="muted mini">{x.type} · ${x.amount.toLocaleString()}</div></button>)}</div><div className="card"><h3>📁 Full Claim File</h3><Claim c={c} /><div className="row"><button className="btn" onClick={() => page('Customer 360')}>Customer 360</button><button className="btn secondary" onClick={() => page('Investigation Toolkit')}>Toolkit</button></div></div></div>; }
+function Claim({ c }) { if (!c) return <p>No case selected.</p>; return <><KV k="Claim Type" v={c.type} /><KV k="Customer" v={c.customer} /><KV k="Amount" v={`$${c.amount.toLocaleString()}`} /><KV k="Merchant" v={c.merchant} /><KV k="Opened" v={c.opened} /><KV k="Summary" v={c.summary} /><KV k="Training Answer" v={c.correct} /></>; }
+function Customer({ c, mark }) { useEffect(() => mark('Customer 360'), []); return <div className="grid cols"><div className="card"><h3>👤 Customer 360</h3><div className="row"><div className="logo">{c.customer[0]}</div><div><h2>{c.customer}</h2><span className={`tag risk-${c.risk.toLowerCase()}`}>{c.risk} Risk</span></div></div><KV k="DOB" v={c.dob} /><KV k="SSN" v={c.ssn} /><KV k="Address" v={c.address} /><KV k="Email" v={c.email} /><KV k="Phone" v={c.phone} /></div><div className="card"><h3>💳 Banking Relationship</h3><KV k="Checking" v={`****${c.id.slice(-4)} · $${(1800 + c.amount / 8).toFixed(2)}`} /><KV k="Device" v={c.device} /><KV k="IP" v={c.ip} /><div className={`result ${c.risk === 'High' ? 'bad' : 'good'}`}>{c.risk === 'High' ? 'Shared device or recent profile change found.' : 'Profile appears stable with normal history.'}</div></div></div>; }
+function Intel({ c, s, patch, mark, flag }) { useEffect(() => mark('Identity Intel'), []); const result = s.intelResult; const run = (type) => patch({ intelResult: { type, value: type === 'SSN' ? c.ssn : type === 'Phone' ? c.phone : type === 'Email' ? c.email : type === 'Device' ? c.device : c.address, risk: c.risk } }); return <div className="grid cols"><div className="card"><h3>🛰️ Identity Intel Workspace</h3><p className="muted">Search fictional identity records and tag what matters.</p><div className="tools">{['SSN', 'Phone', 'Email', 'Address', 'Device', 'IP'].map(x => <button className="tool" key={x} onClick={() => run(x)}>🔎 {x} Search</button>)}</div></div><div className="card"><h3>🔎 Results</h3>{result ? <div className={`result ${c.risk === 'High' ? 'warn' : 'good'}`}><KV k="Search Type" v={result.type} /><KV k="Value" v={result.value} /><KV k="Identity Confidence" v={c.risk === 'High' ? '62%' : '94%'} /><KV k="Linked Records" v={c.risk === 'High' ? 'Shared identifiers found on unrelated profiles.' : 'No unrelated linked profiles.'} /><div className="row"><button className="btn green" onClick={() => flag('green', `${result.type} supports identity`)}>Tag Green</button><button className="btn red" onClick={() => flag('red', `${result.type} has suspicious identity links`)}>Tag Red</button></div></div> : <p className="muted">Run a search to see records.</p>}</div></div>; }
+function Toolkit({ c, s, patch, mark, flag }) { useEffect(() => mark('Investigation Toolkit'), []); const tools = c.tools || []; const run = (tool) => patch({ toolResult: tool }); return <div className="grid cols"><div className="card"><h3>🧰 Investigation Toolkit</h3><p className="muted">Tools change by claim type: <b>{c.type}</b>.</p><div className="tools">{tools.map(t => <button className="tool" key={t} onClick={() => run(t)}>{toolIcon(t)} {t}</button>)}</div></div><div className="card"><h3>Tool Results</h3>{s.toolResult ? <ToolResult c={c} tool={s.toolResult} flag={flag} /> : <p className="muted">Pick a tool to search detailed fictional records.</p>}</div></div>; }
+function ToolResult({ c, tool, flag }) { return <div className={c.risk === 'High' ? 'result warn' : 'result good'}><h3>{tool}</h3><KV k="Record Reviewed" v={`${tool} for ${c.customer}`} /><KV k="Finding" v={c.risk === 'High' ? 'Recent change, mismatch, or shared identifier requires review.' : 'Record generally matches expected customer behavior.'} /><KV k="Investigator Prompt" v="Compare this with Customer 360, documents, interview, and claim timeline." /><div className="row"><button className="btn green" onClick={() => flag('green', `${tool}: supports claim`) }>Tag Green</button><button className="btn red" onClick={() => flag('red', `${tool}: suspicious finding`) }>Tag Red</button></div></div>; }
+function Documents({ c, s, doc, flag, mark }) { useEffect(() => mark('Documents'), []); const docs = ['Driver License', 'Bank Statement', 'Paystub', 'Police Report', 'Merchant Receipt', 'Proof of Delivery', 'Business License']; return <div className="grid cols"><div className="card"><h3>📄 Request Documents</h3>{docs.map(d => <button className="case" key={d} onClick={() => doc(d)}>📄 {d}</button>)}</div><div className="card"><h3>📂 Document Viewer</h3>{s.docs.length ? s.docs.map(d => <div className="doc" key={d}><h3>{d}</h3><KV k="Customer" v={c.customer} /><KV k="Reference" v={`${c.id}-${d.slice(0, 3).toUpperCase()}`} /><KV k="Signal" v={c.risk === 'High' ? 'Contains an inconsistency to review.' : 'Mostly consistent with profile.'} /><div className="row"><button className="btn green" onClick={() => flag('green', `${d}: supports record`)}>Tag Green</button><button className="btn red" onClick={() => flag('red', `${d}: inconsistency found`)}>Tag Red</button></div></div>) : <p className="muted">No documents requested yet.</p>}</div></div>; }
+function Interview({ c, s, setS, mark, flag }) { useEffect(() => mark('Interview'), []); const ask = (q) => setS(v => ({ ...v, interview: [...v.interview, { q, a: answer(c, q) }] })); return <div className="grid cols"><div className="card"><h3>🎤 Customer Interview</h3>{c.questions.map(q => <button className="case" key={q} onClick={() => ask(q)}>{q}</button>)}</div><div className="card"><h3>Transcript</h3>{s.interview.length ? s.interview.map(x => <div key={x.q}><div className="bubble inv"><b>Investigator:</b> {x.q}</div><div className="bubble cust"><b>Customer:</b> {x.a}</div></div>) : <p className="muted">No questions asked yet.</p>}<div className="row"><button className="btn green" onClick={() => flag('green', 'Interview supports claim')}>Tag Green</button><button className="btn red" onClick={() => flag('red', 'Interview has inconsistencies')}>Tag Red</button></div></div></div>; }
+function Decision({ c, s, patch, complete }) { return <div className="grid cols"><div className="card"><h3>⚖️ Flags & Decision</h3>{s.flags.length ? s.flags.map((f, i) => <div className={`result ${f.kind === 'red' ? 'bad' : 'good'}`} key={i}><b>{f.kind === 'red' ? '🔴' : '🟢'} {f.text}</b><br /><span className="muted">{f.at}</span></div>) : <p className="muted">No flags tagged yet.</p>}</div><div className="card"><h3>Final Decision</h3>{decisions.map(d => <button key={d} className={s.decision === d ? 'choice active' : 'choice'} onClick={() => patch({ decision: d })}>{d}</button>)}<button className="btn" disabled={!s.decision} onClick={complete}>Complete Case</button><p className="muted">Training answer: {c?.correct}</p></div></div>; }
+function Debrief({ s }) { const d = s.lastClosed; if (!d) return <div className="card"><h3>📖 Case Debrief</h3><p>Complete a case to generate debrief.</p></div>; return <div className="grid"><div className="card"><h3>📖 Case Debrief: {d.id}</h3><KV k="Claim Type" v={d.type} /><KV k="Your Decision" v={d.decision} /><KV k="Recommended" v={d.correct} /><KV k="Score" v={`${d.score}%`} /><p>{d.summary}</p></div><div className="grid cols"><div className="card"><h3>Evidence You Tagged</h3>{d.flags.length ? d.flags.map((f, i) => <div className={`result ${f.kind === 'red' ? 'bad' : 'good'}`} key={i}>{f.text}</div>) : <p>No flags were tagged.</p>}</div><div className="card"><h3>Case Notes</h3>{d.notes.length ? d.notes.map((n, i) => <div className="result" key={i}>{n}</div>) : <p>No notes captured.</p>}</div></div></div>; }
+function Encyclopedia() { return <div className="grid cols"><div className="card"><h3>📚 Fraud Claim Types</h3>{types.map(t => <div className="result" key={t}><b>{t}</b><p className="muted">{typeData[t].summary}</p></div>)}</div><div className="card"><h3>Investigator Rules</h3><p>Use Customer 360, run Identity Intel, search the claim-specific toolkit, request documents, interview the customer, tag red and green flags, then make your decision.</p></div></div>; }
+function KV({ k, v }) { return <div className="kv"><b>{k}</b><span>{v}</span></div>; }
+function Empty() { return <div className="card"><h3>No active case</h3></div>; }
+function toolIcon(t) { if (t.includes('Device') || t.includes('IP') || t.includes('Email')) return '🌐'; if (t.includes('Document') || t.includes('Evidence') || t.includes('Delivery')) return '📄'; if (t.includes('Credit') || t.includes('Income') || t.includes('Debt')) return '📊'; return '🔍'; }
+function answer(c, q) { if (c.risk === 'High') return `I'm not fully sure. I noticed something odd around the same time as the claim. (${q})`; return `That matches my normal activity and I can provide supporting details. (${q})`; }
