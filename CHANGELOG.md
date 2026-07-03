@@ -18,7 +18,7 @@
 - Added `src/interviewScripts.js` so interviews now return claim-specific answers, tone, credibility, and clues instead of repeating the same response.
 - Added `Session History` as an Account Takeover investigation tool.
 - Added document reports for `Profile Change History` and `Session History`.
-- Expanded Customer 360 with account/client history: profile changes, known devices, known locations, customer since, and prior claims.
+- Expanded Customer 360 with account/client history: profile changes, known devices, known locations, customer since, products, prior claims, contact history, prior fraud, and behavior patterns.
 
 ### Fixed
 - Fixed case selection flow.
@@ -29,4 +29,4 @@
 - Updated AI Coach evidence matching so Profile Change History and Session History count as core Account Takeover evidence.
 
 ### Current Next Step
-Keep the current layout stable. Next, deepen Customer 360 with contact history and behavior patterns, then add more document-specific templates.
+Keep the current layout stable. Next, deepen Customer 360 with tabs or collapsible sections, then add more document-specific templates.
