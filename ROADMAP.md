@@ -6,14 +6,15 @@ When the user says **run**, run the Fraud Academy Builder workflow:
 2. Continue from the next unchecked roadmap item.
 3. Make a small safe GitHub update if possible.
 4. Preserve the purple/pink neon investigator theme, React + Vite + PWA setup, mobile-friendly layout, completed-case queue behavior, Case Debrief, and claim-specific evidence flow.
-5. If GitHub editing is unavailable, write the next code patch in chat so it can be applied later.
+5. Keep the current app layout stable unless the user explicitly asks for a redesign. Enhance depth, records, documents, coaching, and realism inside the existing screens.
+6. If GitHub editing is unavailable, write the next code patch in chat so it can be applied later.
 
 ## Current Priority
 - [x] Restore v15 command-center style layout.
 - [x] Keep case queue, Customer 360, Identity Intel, Toolkit, Documents, Interview, Flags & Decision, Case Debrief, and Encyclopedia.
 - [x] Upgrade Toolkit results from generic text to detailed fictional records.
-- [ ] Rebuild Toolkit layout into grouped sections similar to v14: Account Access, Digital Signals, Money Movement, Customer Evidence, Documents, and Credit Review.
-- [ ] Make active Toolkit selection visibly highlighted.
+- [x] Add AI Coach Debrief that explains judgment, evidence, missed checks, and senior-investigator reasoning.
+- [ ] Make active Toolkit selection visibly highlighted without changing the layout.
 - [ ] Add richer document chips/cards from Toolkit results that open the Document Viewer.
 - [ ] Upgrade Document Viewer so each document looks like a detailed fictional record instead of a simple placeholder.
 - [ ] Upgrade Customer 360 with relationship age, prior cases, accounts, trusted devices, contact history, and behavioral profile.
@@ -25,7 +26,7 @@ When the user says **run**, run the Fraud Academy Builder workflow:
 - [ ] Add polish: animations, mobile spacing, card transitions, empty states, and install prompts.
 
 ## Design Direction
-Fraud Academy should feel like a fictional internal bank fraud investigator workstation, not a basic tutorial app. Keep it colorful, professional, and mobile-first with a purple/pink neon detective style.
+Fraud Academy should feel like a fictional internal bank fraud investigator workstation, not a basic tutorial app. Keep it colorful, professional, mobile-first, and consistent with the current purple/pink neon detective style.
 
 ## Claim Types To Preserve
 - Account Takeover
@@ -38,4 +39,4 @@ Fraud Academy should feel like a fictional internal bank fraud investigator work
 - Business Verification / KYB
 
 ## Next Builder Step
-Build the grouped Toolkit layout first. Do not rewrite the whole app. Make a small working patch that improves the existing Toolkit screen and keeps the current detailed toolkit records working.
+Keep the layout as-is. Next, make the active Toolkit selection visibly highlighted and then upgrade the Document Viewer into richer fictional records.
