@@ -23,6 +23,55 @@ export function getToolkitRecord(tool, c) {
 
   const set = (extra) => ({ ...record, ...extra, rows: [...record.rows, ...(extra.rows || [])] });
 
+  if (tool === 'Login History') return set({
+    level: high ? 'red' : 'green',
+    summary: 'Authentication history showing login attempts, login result, device, IP, browser, operating system, session start, and logout behavior.',
+    rows: [
+      ['Successful Login', high ? '8:41 AM from new device' : '9:12 AM from known device'],
+      ['Failed Attempts', high ? '3 failed attempts before success' : '0 failed attempts'],
+      ['Device ID', c.device],
+      ['IP Address', c.ip],
+      ['Location', high ? 'New location outside normal pattern' : 'Normal customer region'],
+      ['Browser / OS', high ? 'Chrome Mobile / Android 16 - first seen' : 'Known mobile browser / trusted OS'],
+      ['Session End', high ? 'No normal logout event captured' : 'Normal logout after 6 minutes'],
+    ],
+    signals: high ? ['Multiple failed attempts before success.', 'First login from new device.', 'Login location does not match normal customer behavior.'] : ['Login pattern matches normal behavior.', 'Known device and location.', 'No failed-login burst before access.'],
+    docs: ['Login Timeline', 'Device Fingerprint Report', 'IP Lookup', 'Session History'],
+    next: ['Compare login timing against profile changes.', 'Open Device Fingerprint Report.', 'Ask whether the customer traveled or shared a code.'],
+  });
+
+  if (tool === 'Profile Change History') return set({
+    level: high ? 'red' : 'green',
+    summary: 'Account maintenance history showing security and contact changes made before or after the disputed activity.',
+    rows: [
+      ['Password Change', high ? '8:42 AM, one minute after new login' : 'No recent password change'],
+      ['Recovery Email', high ? 'Updated during same session' : 'No change in last 90 days'],
+      ['Phone Number', high ? 'Changed before OTP delivery' : 'Trusted phone unchanged'],
+      ['MFA Device', high ? 'New SMS route enrolled' : 'Existing MFA route retained'],
+      ['Security Questions', high ? 'Updated after password reset' : 'No recent update'],
+      ['Change Channel', high ? 'Online banking session from new device' : 'Customer service verified request'],
+    ],
+    signals: high ? ['Multiple security settings changed within minutes.', 'Profile changes occurred before the money movement.', 'ATO pattern: take control first, then transact.'] : ['No risky profile maintenance event.', 'Contact methods are stable.', 'Account maintenance does not support takeover.'],
+    docs: ['Profile Change History', 'Password Reset History', 'MFA History', 'Customer 360 Notes'],
+    next: ['Compare profile-change timestamps to Login History.', 'Verify old and new phone/email ownership.', 'Ask customer about spoofed bank calls or texts.'],
+  });
+
+  if (tool === 'Session History') return set({
+    level: high ? 'red' : 'green',
+    summary: 'Post-login activity showing what the user did after authentication, including pages viewed, profile changes, payees, and money movement.',
+    rows: [
+      ['Session Start', high ? '8:41 AM' : '9:12 AM'],
+      ['Pages Viewed', high ? 'Security settings, profile, transfer, card controls' : 'Balance, recent transactions, statements'],
+      ['Profile Actions', high ? 'Phone updated, MFA route changed' : 'No profile changes'],
+      ['Money Movement', high ? 'Transfer or purchase initiated after profile update' : 'No unusual transfer activity'],
+      ['Beneficiary / Payee', high ? 'New payee or token used during session' : 'Existing payee only'],
+      ['Logout', high ? 'No normal logout captured' : 'Normal logout'],
+    ],
+    signals: high ? ['Session behavior moved from account control to money movement.', 'New payee/token activity happened after profile changes.', 'No normal logout may suggest rushed takeover activity.'] : ['Session actions match normal customer behavior.', 'No suspicious payee or profile activity.', 'Normal logout captured.'],
+    docs: ['Session History', 'Transaction Timeline', 'Profile Change History', 'Payee Change Log'],
+    next: ['Follow the session path in order.', 'Open Transaction Timeline to connect access to loss.', 'Tag whether the session behavior supports ATO.'],
+  });
+
   if (tool === 'Merchant Evidence') return set({
     level: high ? 'red' : 'green',
     summary: high ? 'Merchant evidence strongly supports delivery or customer participation.' : 'Merchant packet is incomplete or only partially supports the merchant.',
@@ -110,17 +159,17 @@ export function getToolkitRecord(tool, c) {
     docs: ['Authorization Log', 'Order Match Sheet', 'Merchant Receipt'],
   });
 
-  if (tool.includes('Login') || tool.includes('Password') || tool.includes('MFA') || tool.includes('Device') || tool.includes('IP')) return set({
+  if (tool.includes('Password') || tool.includes('MFA') || tool.includes('Device') || tool.includes('IP')) return set({
     level: high ? 'red' : 'green',
     rows: [
       ['Device ID', c.device],
       ['IP Address', c.ip],
       ['Geo / Network', high ? 'New location + VPN/proxy signal' : 'Normal customer region'],
-      ['Profile Change', high ? 'Password, phone, or email changed before activity' : 'No risky profile change'],
       ['MFA Result', high ? 'SMS OTP to newly added phone' : 'Push MFA to trusted device'],
+      ['Trusted Status', high ? 'Not trusted before this case' : 'Previously trusted'],
     ],
-    signals: high ? ['ATO pattern: profile change before loss.', 'New device and network are suspicious.', 'Customer interview should ask about phishing.'] : ['Digital activity matches known behavior.', 'No new profile change.', 'Focus on transaction evidence.'],
-    docs: ['Login Timeline', 'Device Fingerprint Report', 'MFA History', 'IP Lookup'],
+    signals: high ? ['New device and network are suspicious.', 'MFA result needs context.', 'Customer interview should ask about phishing.'] : ['Digital activity matches known behavior.', 'Trusted method was used.', 'Focus on transaction evidence.'],
+    docs: ['Device Fingerprint Report', 'MFA History', 'IP Lookup', 'Login Timeline'],
   });
 
   if (tool.includes('Income') || tool.includes('Employment') || tool.includes('Debt') || tool.includes('Credit') || tool.includes('Cash Flow') || tool.includes('Bank Statements')) return set({
