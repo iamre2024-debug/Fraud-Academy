@@ -1,5 +1,17 @@
 # Fraud Academy Changelog
 
+## 2026-07-04
+
+### Added
+- Added `src/toolkitPolish.css` as a safe polish layer for active Toolkit selection styling.
+
+### Improved
+- Active Toolkit buttons now show a stronger selected state with neon border, glow, gradient depth, a selected badge, and better keyboard focus styling.
+- Kept the existing page layout, purple/pink neon theme, React + Vite + PWA structure, and mobile-friendly behavior intact.
+
+### Current Next Step
+Expand Document Viewer 2.0 with more document-specific templates for every requested record.
+
 ## 2026-07-03
 
 ### Added
