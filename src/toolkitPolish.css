@@ -1,0 +1,42 @@
+.tool.active {
+  position: relative;
+  border-color: var(--pink);
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 79, 163, .28), transparent 34%),
+    linear-gradient(135deg, rgba(124, 58, 237, .42), rgba(255, 79, 163, .18));
+  box-shadow:
+    0 0 0 2px rgba(255, 79, 163, .26),
+    0 0 34px rgba(168, 85, 247, .36),
+    inset 0 0 0 1px rgba(255, 255, 255, .12);
+  transform: translateY(-2px);
+}
+
+.tool.active::after {
+  content: "Selected";
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(8, 6, 17, .7);
+  color: #ffd6f0;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.tool.active:focus-visible,
+.tool:focus-visible {
+  outline: 3px solid rgba(86, 245, 215, .6);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .tool.active::after {
+    position: static;
+    display: inline-flex;
+    margin-top: 10px;
+  }
+}
