@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import FeatureArchitect from './FeatureArchitect.jsx';
 
-const STORE = 'fraud-academy-v21-stable-build';
+const STORE = 'fraud-academy-v22-polish-pass';
 
 const SIDEBAR = [
   ['Dashboard', '⌂'], ['Case Queue', '▤'], ['Case Briefing', '▣'], ['Customer 360', '♙'],
@@ -12,21 +12,10 @@ const SIDEBAR = [
 ].map(([id, icon]) => ({ id, icon, label: id }));
 
 const CLAIMS = [
-  'Account Takeover',
-  'First Party Fraud',
-  'Chargeback / Card Dispute',
-  'Email Fraud / BEC',
-  'Payroll Fraud / Direct Deposit Diversion',
-  'Credit Risk',
-  'Check Fraud / Check Image Review',
-  'Synthetic Identity',
-  'Bust-Out Fraud',
-  'Ghost Employee Fraud',
-  'Digital Wallet Fraud',
-  'Money Mule',
-  'Vendor Fraud',
-  'Merchant Fraud',
-  'ACH Fraud',
+  'Account Takeover', 'First Party Fraud', 'Chargeback / Card Dispute', 'Email Fraud / BEC',
+  'Payroll Fraud / Direct Deposit Diversion', 'Credit Risk', 'Check Fraud / Check Image Review',
+  'Synthetic Identity', 'Bust-Out Fraud', 'Ghost Employee Fraud', 'Digital Wallet Fraud', 'Money Mule',
+  'Vendor Fraud', 'Merchant Fraud', 'ACH Fraud',
 ];
 
 const defaultPlay = {
@@ -181,6 +170,7 @@ const finalOptions = {
 
 const names = ['Jessica Marie Johnson', 'Olivia M. Carter', 'Brandon T. Lewis', 'Riya K. Patel', 'Marcus D. Hill', 'Tiffany R. Anderson'];
 const companies = ['Sunset Landscaping LLC', 'Crown Payroll Services', 'Velora Boutique', 'Metro Wireless', 'NorthStar Electronics', 'Blue Orchid Supply Co.'];
+const quickAccess = ['Addresses', 'Phones', 'Emails', 'Associates', 'Businesses', 'Social Media', 'Relatives', 'More'];
 
 function suggestedNext(type) {
   if (type.includes('BEC') || type.includes('Vendor') || type.includes('Ghost') || type.includes('Payroll') || type.includes('ACH')) return 'Bank Account Verification';
@@ -286,8 +276,8 @@ export default function App() {
       {s.page === 'Case Queue' && <CaseQueue {...props} />}
       {s.page === 'Case Briefing' && <CaseBriefing {...props} />}
       {s.page === 'Customer 360' && <Customer360 {...props} />}
-      {s.page === 'Identity Intel' && <EvidenceWorkspace title="Identity Intel" question="Who is this person, business, employee, vendor, or profile connected to?" docs={['Identity Summary', 'Address History', 'Phone / Email Age', 'Public Records']} {...props} />}
-      {s.page === 'Login History' && <EvidenceWorkspace title="Login History" question="Does this login activity make sense for the customer and case?" docs={['Login Activity Report', 'MFA / OTP Record', 'Admin Portal Log']} {...props} />}
+      {s.page === 'Identity Intel' && <IdentityIntel {...props} />}
+      {s.page === 'Login History' && <LoginHistory {...props} />}
       {s.page === 'Device Intel' && <EvidenceWorkspace title="Device Intel" question="Does this device make sense for this customer, employee, vendor, or session?" docs={['Device Activity Report', 'Wallet Enrollment Record', 'Device Comparison']} {...props} />}
       {s.page === 'Financial Investigation' && <EvidenceWorkspace title="Financial Investigation" question="Does the money make sense?" docs={['Financial Activity Report', 'Transfer Timeline', 'Deposit Review']} {...props} />}
       {s.page === 'Business Intelligence' && <EvidenceWorkspace title="Business Intelligence" question="Does this business activity make sense?" docs={['Business Profile', 'Website Review', 'Public Records']} {...props} />}
@@ -317,7 +307,7 @@ function Sidebar({ s, current, go }) {
   return <aside className="global-sidebar">
     <div className="brand-lockup"><div className="brand-mark">FA</div><div><h1>Fraud Academy</h1><p>Investigator Workspace</p></div></div>
     <nav className="sidebar-nav">{SIDEBAR.map(item => <button key={item.id} onClick={() => go(item.id)} className={s.page === item.id ? 'active' : ''}><span>{item.icon}</span>{item.label}</button>)}</nav>
-    <div className="luna-card"><div className="luna-cat">🐈‍⬛</div><b>Luna AI Mentor</b><p>Evidence first. Conclusions later.</p></div>
+    <div className="luna-card"><div className="luna-cat">🐈‍⬛</div><b>Luna AI Mentor</b><p>Need help? Ask Luna without giving away the answer.</p><button onClick={() => go('Luna AI')}>Chat with Luna</button></div>
     <button className="current-case-card" onClick={() => go('Case Briefing')}><span>Current Case</span><b>{current?.id || 'Queue Clear'}</b><small>{current?.type || 'No active case'}</small></button>
   </aside>;
 }
@@ -327,21 +317,32 @@ function MobileNav({ s, go }) {
 }
 
 function TopBar({ s, current, patch }) {
-  return <header className="topbar"><div><p className="eyebrow">Investigation Workspace</p><h2>{s.page}</h2><p className="muted">Teaching investigators how to think, not what to think.</p></div><div className="top-actions"><span className="pill">{current?.id || 'No Case'}</span><span className="pill glow">{current?.priority || 'Ready'}</span><button className="soft-btn" onClick={() => patch(baseState())}>Reset Training</button></div></header>;
+  return <header className="topbar"><div><p className="eyebrow">Investigation Workspace</p><h2>{s.page}</h2><p className="muted">Teaching investigators how to think, not what to think.</p></div><div className="top-actions"><span className="pill xp">💎 2,450 XP</span><span className="pill fire">🔥 12 Day Streak</span><span className="pill glow">{current?.priority || 'Ready'}</span><button className="soft-btn" onClick={() => patch(baseState())}>Reset Training</button></div></header>;
 }
 
 function Dashboard({ s, current, go }) {
-  return <section className="dash-grid">
-    <div className="hero-card"><div><p className="eyebrow">Luna says ✨</p><h2>Good evening, Ree</h2><p>Ready to solve another case without giving away the answer?</p></div><button onClick={() => go('Investigation Workspace')}>Continue Investigation</button></div>
-    <div className="stat-row"><Stat label="Active Cases" value={s.cases.length} /><Stat label="Closed Cases" value={s.completed.length} /><Stat label="Workspaces Reviewed" value={s.reviewed.length} /><Stat label="Claim Types" value={CLAIMS.length} /></div>
-    <div className="panel active-case"><h3>Active Case</h3><CaseSnapshot c={current} /><div className="button-row"><button onClick={() => go('Case Briefing')}>Case Briefing</button><button onClick={() => go(current?.next || 'Customer 360')}>Suggested Next</button></div></div>
-    <div className="panel"><h3>Daily Goals</h3><Checklist items={['Review evidence before conclusions', 'Use neutral labels', 'Draft summary from reviewed records', 'Save one Luna coaching insight']} done={s.reviewed.length} /></div>
+  return <section className="dashboard-polish">
+    <div className="dash-hero cute-sparkles"><div><p className="eyebrow">Good evening, Ree! 👋</p><h2>Ready to solve some cases?</h2><p>Cozy investigator mode is on. Evidence first. Conclusions later.</p></div><div className="hero-mascot">👩🏽‍💻🌙</div></div>
+    <div className="dash-stats">
+      <CuteStat icon="◉" label="Fraud Detection Accuracy" value="70%" caption="Keep going!" />
+      <CuteStat icon="▣" label="Active Cases" value={s.cases.length} caption="View cases →" />
+      <CuteStat icon="✦" label="Cases Solved" value={s.completed.length} caption="This month" />
+      <CuteStat icon="☆" label="Pending Review" value="3" caption="See reviews" />
+    </div>
+    <div className="dash-main-card next-case-card"><div><p className="eyebrow">Your Next Case ✦</p><h3>{current?.type}</h3><CaseMini c={current} /><button onClick={() => go('Case Briefing')}>Continue Case →</button></div><div className="mug-art">☕<span>♡</span></div></div>
+    <div className="dash-main-card progress-card"><h3>Your Progress ✦</h3><div className="progress-ring"><b>70%</b><span>Accuracy</span></div><p>Accuracy Goal: 90%</p><small>You’re on your way! 💗</small></div>
+    <div className="dash-bottom-card crew-card"><h3>Meet Your Crew 💜</h3><div className="crew-row"><span>🐈‍⬛ Luna</span><span>☁️ Cloudy</span><span>⭐ Nova</span></div></div>
+    <div className="dash-bottom-card goal-card"><h3>Daily Goal 🌸</h3><Checklist items={['Complete 3 investigations', 'Review one timeline', 'Ask Luna one question']} done={s.reviewed.length} /></div>
+    <div className="dash-bottom-card achievement-card"><h3>Recent Achievement</h3><p>Evidence Explorer reviewed 25+ full reports.</p><button onClick={() => go('Learning Paths')}>View Achievements</button></div>
   </section>;
 }
 
+function CuteStat({ icon, label, value, caption }) { return <div className="cute-stat"><span>{icon}</span><b>{value}</b><small>{label}</small><em>{caption}</em></div>; }
+function CaseMini({ c }) { if (!c) return null; return <div className="case-mini"><span>{c.id}</span><small>{c.customer}</small><small>{c.priority} · {c.difficulty}</small></div>; }
+
 function CaseQueue({ s, current, patch, selectCase }) {
   const filtered = s.filter === 'All Cases' ? s.cases : s.cases.filter(c => c.type === s.filter);
-  return <section className="queue-layout"><div className="queue-list"><div className="section-head"><h3>Case Queue</h3><select value={s.filter} onChange={e => patch({ filter: e.target.value })}><option>All Cases</option>{CLAIMS.map(c => <option key={c}>{c}</option>)}</select></div>{filtered.map(c => <button key={c.id} className={`case-card ${current?.id === c.id ? 'active' : ''}`} onClick={() => selectCase(c.id)}><span className="case-id">{c.id}</span><b>{c.type}</b><small>{c.customer} · {c.priority}</small><p>{c.summary}</p></button>)}</div><aside className="queue-side"><div className="panel"><h3>Today’s Snapshot</h3><Stat label="Active" value={s.cases.length} /><Stat label="Completed" value={s.completed.length} /></div><div className="panel"><h3>Luna Tip</h3><p>Choose a case, read the briefing first, then gather evidence. Do not jump straight to a decision.</p></div></aside></section>;
+  return <section className="queue-layout"><div className="queue-list"><div className="section-head"><h3>Case Queue</h3><select value={s.filter} onChange={e => patch({ filter: e.target.value })}><option>All Cases</option>{CLAIMS.map(c => <option key={c}>{c}</option>)}</select></div>{filtered.map(c => <button key={c.id} className={`case-card ${current?.id === c.id ? 'active' : ''}`} onClick={() => selectCase(c.id)}><span className="case-id">{c.id}</span><b>{c.type}</b><small>{c.customer} · {c.priority}</small><p>{c.summary}</p></button>)}</div><aside className="queue-side"><div className="panel"><h3>Today’s Snapshot</h3><Stat label="Active" value={s.cases.length} /><Stat label="Completed" value={s.completed.length} /></div><div className="panel cute-tip"><h3>Luna Tip 🌙</h3><p>Choose a case, read the briefing first, then gather evidence. Do not jump straight to a decision.</p></div></aside></section>;
 }
 
 function CaseBriefing({ current, go }) {
@@ -349,7 +350,33 @@ function CaseBriefing({ current, go }) {
 }
 
 function Customer360({ current, addDocs, go }) {
-  return <section className="customer360"><div className="customer-profile panel"><div className="avatar">{current?.customer?.[0] || 'C'}</div><h3>{current?.customer}</h3><p>{current?.profileId}</p><span className="status-pill">Active Customer</span><Info k="Customer Since" v="2017" /><Info k="Relationship" v={current?.relationship} /><Info k="Products" v="Checking · Savings · Card" /><Info k="Channel" v={current?.channel} /></div><div className="panel"><h3>Relationship Overview</h3><div className="metric-grid"><Metric label="Prior Claims" value="4" /><Metric label="Verified Phone" value="Yes" /><Metric label="Verified Email" value="Yes" /><Metric label="Account Age" value={current?.accountAge} /></div><h4>Contact Information</h4><Info k="Phone" v={current?.phone} /><Info k="Email" v={current?.email} /><Info k="Address" v={current?.address} /></div><div className="panel"><h3>Profile Change Timeline</h3>{['Password updated', 'Phone number updated', 'Email address updated', 'MFA enabled', 'Secure message sent'].map((x, i) => <TimelineItem key={x} label={x} time={`07/0${i + 1}/2026`} />)}<button onClick={() => addDocs(['Profile Change Timeline', 'Customer Snapshot'])}>Add Profile Evidence</button></div><div className="panel"><h3>Current Case Snapshot</h3><CaseSnapshot c={current} /><button onClick={() => go('Identity Intel')}>Go to Identity Intel</button></div></section>;
+  return <section className="customer360 polished-customer">
+    <div className="customer-profile panel charm-panel"><span className="corner-charm">💗</span><div className="avatar portrait">{current?.customer?.[0] || 'C'}</div><h3>{current?.customer}</h3><p>{current?.profileId}</p><span className="status-pill">Active Customer</span><Info k="Customer Since" v="2017" /><Info k="Relationship" v={current?.relationship} /><Info k="Products" v="Checking · Savings · Card" /><Info k="Channel" v={current?.channel} /></div>
+    <div className="panel relationship-panel"><h3>Relationship Overview ✦</h3><div className="metric-grid bright"><Metric label="Customer Since" value="2017" /><Metric label="Products" value="4" /><Metric label="Verified Phone" value="Yes" /><Metric label="Verified Email" value="Yes" /><Metric label="Current Address" value="5 yrs" /><Metric label="Trusted Devices" value="3" /></div><h4>Contact Information</h4><Info k="Phone" v={current?.phone} /><Info k="Email" v={current?.email} /><Info k="Address" v={current?.address} /><Info k="Preferred Contact" v="Email" /></div>
+    <div className="panel profile-timeline"><h3>Profile Change Timeline ✨</h3>{['Password updated', 'Phone number updated', 'Email address updated', 'Address updated', 'MFA enabled'].map((x, i) => <TimelineItem key={x} label={x} time={`07/0${i + 1}/2026`} />)}<button onClick={() => addDocs(['Profile Change Timeline', 'Customer Snapshot'])}>Add Profile Evidence</button></div>
+    <div className="panel account-card"><h3>Account Summary 💳</h3><Info k="Checking" v="•••• 4837 · $4,298.31" /><Info k="Savings" v="•••• 6789 · $12,560.08" /><Info k="Credit Card" v="•••• 2846 · $1,243.75" /><Info k="Auto Loan" v="•••• 5711 · $18,230.41" /></div>
+    <div className="panel case-snapshot-card"><h3>Current Case Snapshot</h3><CaseSnapshot c={current} /><button onClick={() => go('Identity Intel')}>Identity Intel →</button></div>
+    <div className="customer-action-bar"><button onClick={() => go('Identity Intel')}>Identity Intel</button><button onClick={() => go('Login History')}>Login History</button><button onClick={() => go('Device Intel')}>Device Intel</button><button onClick={() => go('Financial Investigation')}>Financial Intel</button><button onClick={() => go('Evidence Center')}>Evidence Center</button><button onClick={() => go('Timeline Builder')}>Timeline Builder</button></div>
+  </section>;
+}
+
+function IdentityIntel({ current, addDocs }) {
+  return <section className="identity-workspace cute-sparkles">
+    <div className="identity-search panel"><span className="corner-charm">🦋</span><p className="eyebrow">People Search & Intelligence</p><h3>Identity Intel Workspace</h3><div className="tabs"><button className="active">SSN / ID</button><button>Name + DOB</button><button>Phone</button><button>Email</button></div><label>Search by SSN / ID Number</label><div className="search-input"><span>***-**-6789</span><button>⌕</button></div><button className="run-search" onClick={() => addDocs(['Identity Report', 'Address History', 'Phone History', 'Email History'])}>⌕ Run Search</button><div className="secure-row"><span>🔒 Secure</span><span>Encrypted</span><span>Confidential</span></div></div>
+    <div className="profile-summary panel"><h3>Profile Summary</h3><div className="profile-top"><div className="portrait-img">{current?.person?.[0] || 'J'}</div><div><b>{current?.person}</b><p>DOB: 06/15/1992 · Age 32</p><p>SSN: ***-**-6789</p><p>{current?.email}</p></div><span className="status-pill">Verified</span></div><div className="metric-grid"><Metric label="Addresses" value="8" /><Metric label="Phones" value="5" /><Metric label="Emails" value="3" /><Metric label="Associates" value="7" /></div></div>
+    <div className="panel evidence-explorer"><h3>Evidence Explorer</h3>{['Identity Report', 'Address History', 'Phone History', 'Email History', 'Public Records', 'Criminal Records', 'Business Affiliations'].map((x, i) => <div className="report-row" key={x}><span>{x}</span><b>{i + 2} Records</b><button>View</button></div>)}</div>
+    <div className="panel quick-access"><h3>Quick Access</h3>{quickAccess.map(x => <span className="quick-pill" key={x}>{x}</span>)}</div>
+    <div className="panel chart-card"><h3>Top Evidence Categories</h3><div className="donut"><b>39</b><span>Total Records</span></div><p className="muted">Public records, address history, phone history, business records, and other identity context.</p></div>
+    <div className="panel ai-card"><h3>AI Insights</h3><p>Use identity records as context. Luna should not decide the claim during active investigation.</p><button onClick={() => addDocs(['AI Identity Context Notes'])}>Add Context Notes</button></div>
+  </section>;
+}
+
+function LoginHistory({ current, addDocs }) {
+  const rows = ['Dallas, Texas · Chrome on Windows', 'Dallas, Texas · iPhone 14 Pro', 'Houston, Texas · Safari on iPhone', 'Miami, Florida · Chrome on Android', 'Orlando, Florida · Edge on Windows'];
+  return <section className="login-mobile-shell">
+    <div className="phone-card login-phone"><div className="phone-top"><span>☰</span><b>Fraud Academy</b><span>🐈‍⬛</span></div><h2>Login History ✦</h2><div className="login-person"><div className="portrait-img small">{current?.person?.[0] || 'J'}</div><div><b>{current?.person}</b><p>Last Login: Today at 8:42 AM</p></div></div><div className="metric-grid"><Metric label="Total Logins" value="24" /><Metric label="Unique Locations" value="5" /><Metric label="Unique Devices" value="18" /><Metric label="Needs Review" value="2" /></div><h3>Recent Logins</h3>{rows.map((row, i) => <div className="login-row" key={row}><span>{i < 2 ? 'Known' : i === 2 ? 'Review' : 'Compare'}</span><b>{row}</b><small>IP {current?.ip}</small></div>)}<button onClick={() => addDocs(['Login Activity Report', 'MFA / OTP Record'])}>Review Activity Context</button></div>
+    <div className="phone-card login-phone"><div className="phone-top"><span>←</span><b>Login History</b><span>⚙</span></div><div className="tabs"><button className="active">Logins</button><button>Devices</button><button>Locations</button><button>Review</button></div><div className="metric-grid"><Metric label="Total Logins" value="24" /><Metric label="Locations" value="5" /><Metric label="Devices" value="18" /><Metric label="Review Items" value="2" /></div>{rows.slice(0, 4).map((row, i) => <div className="login-row wide" key={row}><span>{i < 2 ? 'Known' : 'Needs Review'}</span><b>{row}</b><small>Compare to normal login behavior.</small></div>)}<button onClick={() => addDocs(['Login Comparison Report'])}>Add Login Evidence</button></div>
+  </section>;
 }
 
 function EvidenceWorkspace({ title, question, current, addDocs, docs }) {
@@ -385,7 +412,7 @@ function CaseReview({ s, current, patch, complete }) {
 }
 
 function LunaAI({ current }) {
-  return <section className="workspace-grid"><div className="panel xl"><h3>Luna AI Mentor</h3><p>Luna explains, coaches, and drafts. Luna does not solve the case early.</p><Prompt text={`What should I compare in a ${current?.type} case?`} /><Prompt text="Help me write a neutral investigation summary from reviewed evidence." /><Prompt text="What evidence should I review next without giving me the answer?" /></div><CoachCard title="Guardrail" text="Luna cannot label evidence as fraud, reveal hidden evidence, skip steps, or make the final decision during active investigation." /></section>;
+  return <section className="workspace-grid"><div className="panel xl luna-workspace"><h3>Luna AI Mentor</h3><p>Luna explains, coaches, and drafts. Luna does not solve the case early.</p><Prompt text={`What should I compare in a ${current?.type} case?`} /><Prompt text="Help me write a neutral investigation summary from reviewed evidence." /><Prompt text="What evidence should I review next without giving me the answer?" /></div><CoachCard title="Guardrail" text="Luna cannot label evidence as fraud, reveal hidden evidence, skip steps, or make the final decision during active investigation." /></section>;
 }
 
 function FraudLibrary() {
