@@ -1,5 +1,17 @@
 # Fraud Academy Changelog
 
+## 2026-07-05
+
+### Added
+- Expanded `src/documentReports.js` with document-specific templates for Driver License, Bank Statement, Paystub, Police Report, Merchant Receipt, Business License, Authorization Log, Order Match Sheet, Payment Timeline, Carrier Timeline, and Prior Claims Memo.
+
+### Improved
+- Document Viewer 2.0 now gives more realistic fictional banking records with report sections, investigator notes, confidence, and training tips instead of falling back to generic document text for those records.
+- Kept the existing layout, purple/pink neon theme, React + Vite + PWA structure, and mobile-friendly design intact.
+
+### Current Next Step
+Upgrade Customer 360 with tabs or collapsible sections: Overview, Account History, Devices, Locations, Accounts, Prior Fraud, Contact History, Behavior, and Notes.
+
 ## 2026-07-04
 
 ### Added
