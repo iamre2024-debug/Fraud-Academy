@@ -1,51 +1,498 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getToolkitRecord } from './toolkitRecords.js';
-import { getAICoachReview } from './aiCoach.js';
-import { getInterviewAnswer } from './interviewScripts.js';
-import { getDocumentReport } from './documentReports.js';
 import FeatureArchitect from './FeatureArchitect.jsx';
 
-const STORE = 'fraud-academy-v16-feature-architect';
-const OLD_STORE = 'fraud-academy-v15-toolkit-upgrade';
-const pages = ['Dashboard', 'Case Queue', 'Customer 360', 'Identity Intel', 'Investigation Toolkit', 'Documents', 'Interview', 'Flags & Decision', 'Case Debrief', 'Encyclopedia'];
-const icons = ['📊', '📥', '👤', '🛰️', '🧰', '📄', '🎤', '⚖️', '📖', '📚'];
-const names = ['Maya Carter', 'Jordan Ellis', 'Tanya Brooks', 'Darius Hill', 'Alicia Monroe', 'Keisha Grant'];
-const types = ['Account Takeover', 'First-Party Fraud', 'Chargeback', 'Credit Risk', 'Application Verification', 'Email Fraud / BEC'];
-const parties = ['NorthStar Electronics', 'Velora Boutique', 'Metro Wireless', 'Luna Travel', 'Crown Payroll', 'QuickShip Market'];
-const decisions = ['Approve / Pay', 'Deny', 'Partial Credit', 'Escalate', 'Request More Info'];
-const details = {
-  'Account Takeover': { correct: 'Approve / Pay', summary: 'Customer reports activity after profile changes and a new digital access event.', tools: ['Login History', 'Session History', 'Device Fingerprint', 'IP Lookup', 'MFA History', 'Password Reset History', 'Transaction History'], questions: ['Did you approve a new device?', 'Did you receive profile change alerts?', 'Did anyone have access to your phone or email?'] },
-  'First-Party Fraud': { correct: 'Deny', summary: 'Customer claims non-receipt, but merchant evidence may support delivery.', tools: ['Merchant Evidence', 'Shipping Records', 'Previous Claims', 'Chargeback History', 'Customer Statement'], questions: ['Did anyone at your address receive the item?', 'Did the merchant provide tracking?', 'Have you filed similar claims before?'] },
-  'Chargeback': { correct: 'Partial Credit', summary: 'Cardholder disputes a transaction while merchant says customer participated.', tools: ['Transaction History With Merchant', 'Prior Customer Calls', 'Order Match Review', 'Authorization Review', 'Merchant Evidence', 'Reason Code Guide'], questions: ['Do you recognize this merchant?', 'Did you contact the merchant first?', 'Does the shipping address belong to you?'] },
-  'Credit Risk': { correct: 'Escalate', summary: 'Applicant requests credit. Income, work history, cash flow, and obligations need review.', tools: ['Income Verification', 'Employment Verification', 'Debt-to-Income Calculator', 'Credit Report Summary', 'Cash Flow Review', 'Bank Statements'], questions: ['What is your employer and start date?', 'Is your income gross or net?', 'Can you provide support records?'] },
-  'Application Verification': { correct: 'Request More Info', summary: 'New application triggered profile, document, and device review.', tools: ['Profile Verify', 'Driver License Review', 'Selfie Verification', 'Address Verification', 'Phone Verification', 'Device Fingerprint'], questions: ['Did you submit this application?', 'Can you confirm current and previous address?', 'Can you complete selfie verification?'] },
-  'Email Fraud / BEC': { correct: 'Approve / Pay', summary: 'Payment instructions changed after a spoofed vendor-style email.', tools: ['Email Headers', 'Domain Lookup', 'Sender Analysis', 'Beneficiary Review', 'Payment Timeline', 'Wire History'], questions: ['Who requested the payment change?', 'Was the change confirmed by phone?', 'Was this beneficiary used before?'] }
+const STORE = 'fraud-academy-v20-design-rebuild';
+const OLD_STORE = 'fraud-academy-v16-feature-architect';
+
+const SIDEBAR = [
+  { id: 'Dashboard', icon: '⌂', label: 'Dashboard' },
+  { id: 'Case Queue', icon: '▤', label: 'Case Queue' },
+  { id: 'Case Briefing', icon: '▣', label: 'Case Briefing' },
+  { id: 'Customer 360', icon: '♙', label: 'Customer 360' },
+  { id: 'Identity Intel', icon: '⌕', label: 'Identity Intel' },
+  { id: 'Login History', icon: '▧', label: 'Login History' },
+  { id: 'Device Intel', icon: '▱', label: 'Device Intel' },
+  { id: 'Financial Investigation', icon: '$', label: 'Financial Investigation' },
+  { id: 'Business Intelligence', icon: '▥', label: 'Business Intelligence' },
+  { id: 'Bank Account Verification', icon: '◈', label: 'Bank Account Verification' },
+  { id: 'Evidence Center', icon: '▰', label: 'Evidence Center' },
+  { id: 'Customer Contact & Interview', icon: '✆', label: 'Customer Contact & Interview' },
+  { id: 'Timeline Builder', icon: '◷', label: 'Timeline Builder' },
+  { id: 'Investigation Workspace', icon: '✦', label: 'Investigation Workspace' },
+  { id: 'Investigation Summary', icon: '✎', label: 'Investigation Summary' },
+  { id: 'Case Review', icon: '✓', label: 'Case Review' },
+  { id: 'Luna AI', icon: '☾', label: 'Luna AI' },
+  { id: 'Fraud Library', icon: '◇', label: 'Fraud Library' },
+  { id: 'Learning Paths', icon: '☆', label: 'Learning Paths' },
+];
+
+const CLAIMS = [
+  'Account Takeover',
+  'First Party Fraud',
+  'Chargeback / Card Dispute',
+  'Email Fraud / BEC',
+  'Payroll Fraud / Direct Deposit Diversion',
+  'Credit Risk',
+  'Check Fraud / Check Image Review',
+  'Synthetic Identity',
+  'Bust-Out Fraud',
+  'Ghost Employee Fraud',
+  'Digital Wallet Fraud',
+  'Money Mule',
+  'Vendor Fraud',
+  'Merchant Fraud',
+  'ACH Fraud',
+];
+
+const people = [
+  'Jessica Marie Johnson',
+  'Olivia M. Carter',
+  'Brandon T. Lewis',
+  'Riya K. Patel',
+  'Marcus D. Hill',
+  'Tiffany R. Anderson',
+  'David K. Wilson',
+  'Amy Nicole Davis',
+];
+
+const businesses = [
+  'Sunset Landscaping LLC',
+  'Crown Payroll Services',
+  'Velora Boutique',
+  'Metro Wireless',
+  'NorthStar Electronics',
+  'QuickShip Market',
+  'Luna Travel Group',
+  'Blue Orchid Supply Co.',
+];
+
+const claimPlaybook = {
+  'Account Takeover': {
+    party: 'consumer',
+    short: 'Customer reports digital activity after profile changes and new access events.',
+    objective: 'Review profile changes, login/device behavior, MFA events, and money movement before deciding whether access was unauthorized.',
+    evidence: ['Profile Change Timeline', 'Login History', 'Device Context', 'MFA / OTP Record', 'Financial Movement', 'Customer Contact'],
+    docs: ['Login Activity Report', 'MFA / OTP Record', 'Device Activity Report', 'Profile Update Confirmation', 'Secure Message Log', 'Written Statement'],
+    briefing: ['Compare normal login behavior to new session behavior.', 'Review profile changes before the reported activity.', 'Confirm whether the transaction timeline makes sense.'],
+  },
+  'First Party Fraud': {
+    party: 'consumer',
+    short: 'Customer claim needs comparison to prior behavior, merchant records, and account history.',
+    objective: 'Compare the claim to customer history, merchant evidence, prior disputes, and timeline context without labeling the customer early.',
+    evidence: ['Customer History', 'Prior Claims', 'Merchant Activity', 'Transaction Timeline', 'Customer Statement'],
+    docs: ['Customer Claim Form', 'Merchant Response', 'Prior Dispute History', 'Transaction Receipt', 'Contact Notes'],
+    briefing: ['Review prior claim and merchant history.', 'Compare customer statement with records.', 'Document what supports or contradicts the claim.'],
+  },
+  'Chargeback / Card Dispute': {
+    party: 'merchant',
+    short: 'Cardholder disputes a transaction and merchant evidence must be reviewed.',
+    objective: 'Determine whether the evidence supports the dispute reason, not simply whether the customer is upset.',
+    evidence: ['Receipt', 'Order Details', 'Shipping / Delivery', 'Merchant Response', 'Refund History', 'Customer Communication'],
+    docs: ['Receipt', 'Invoice', 'Merchant Response Letter', 'Shipping Confirmation', 'Proof of Delivery', 'Refund History', 'Dispute Correspondence'],
+    briefing: ['Review the dispute reason code context.', 'Compare merchant evidence to the customer claim.', 'Check contact attempts and refund history.'],
+  },
+  'Email Fraud / BEC': {
+    party: 'business',
+    short: 'Payment instructions changed after an email request that needs business verification.',
+    objective: 'Review email thread, payment request, vendor or employee bank change, account ownership, and confirmation attempts.',
+    evidence: ['Email Thread', 'Invoice / Payment Request', 'Bank Account Verification', 'Business Contact Attempt', 'Payment Timeline'],
+    docs: ['Email Thread', 'Invoice', 'Vendor Bank Change Request', 'ACH Authorization', 'Business Verification Notes'],
+    briefing: ['Review who requested the change.', 'Confirm whether payment instructions were independently verified.', 'Compare new account to prior payment history.'],
+  },
+  'Payroll Fraud / Direct Deposit Diversion': {
+    party: 'employee',
+    short: 'Payroll or direct deposit details changed and need employee/business verification.',
+    objective: 'Determine whether the payroll change makes business sense and whether the bank account links to the correct employee.',
+    evidence: ['Payroll Change Request', 'Employee Profile', 'Bank Account Verification', 'Business Confirmation', 'Admin Login History'],
+    docs: ['Direct Deposit Form', 'Payroll Change Request', 'Employee Record', 'HR Request', 'Bank Verification Record'],
+    briefing: ['Review employee creation and payroll change history.', 'Confirm bank ownership and first payroll use.', 'Document business or employee contact attempts.'],
+  },
+  'Credit Risk': {
+    party: 'consumer',
+    short: 'Credit request needs repayment-capacity and behavior review, separate from fraud.',
+    objective: 'Review cash flow, debt obligations, repayment history, income consistency, and utilization before a credit decision.',
+    evidence: ['Credit Summary', 'Payment History', 'Income Verification', 'Cash Flow', 'Utilization', 'Account Age'],
+    docs: ['Credit Summary', 'Payment History', 'Bank Statement', 'Income Verification', 'Application Record'],
+    briefing: ['Keep credit risk separate from fraud.', 'Review ability and willingness to repay.', 'Use credit decision wording only.'],
+  },
+  'Check Fraud / Check Image Review': {
+    party: 'consumer',
+    short: 'Check image, endorsement, deposit channel, and return/hold timeline need review.',
+    objective: 'Review front/back check images, endorsement, alteration indicators, deposit behavior, hold timeline, and account history.',
+    evidence: ['Front Check Image', 'Back Check Image', 'Endorsement Review', 'Deposit Channel', 'Hold / Return Timeline', 'Account History'],
+    docs: ['Front Check Image', 'Back Check Image', 'Mobile Deposit Confirmation', 'Hold Notice', 'Return Item Notice', 'Check Image Review Report'],
+    briefing: ['Review check image quality and endorsement.', 'Compare deposit pattern to account history.', 'Check hold and return timeline.'],
+  },
+  'Synthetic Identity': {
+    party: 'consumer',
+    short: 'Identity profile has limited history and needs identity, credit, and public-record review.',
+    objective: 'Review identity age, contact history, public records, credit behavior, application details, and device/contact consistency.',
+    evidence: ['Identity Age', 'SSN / DOB Context', 'Address History', 'Phone / Email Age', 'Public Records', 'Credit Behavior'],
+    docs: ['Identity Report', 'Application Record', 'Credit Summary', 'Address History', 'KYC Review', 'Public Records Report'],
+    briefing: ['Review identity depth and public record consistency.', 'Compare contact age to application story.', 'Check device and financial behavior.'],
+  },
+  'Bust-Out Fraud': {
+    party: 'credit',
+    short: 'Account relationship builds, utilization rises, then repayment behavior changes.',
+    objective: 'Review account aging, rising utilization, payment decline, deposit or revenue trend, large draws, and credit-risk context.',
+    evidence: ['Credit Line History', 'Utilization Trend', 'Payment History', 'Deposit / Revenue Trend', 'Large Draw Activity'],
+    docs: ['Credit Line History', 'Utilization Report', 'Payment History', 'Revenue Trend', 'Statement Package', 'Public Record Report'],
+    briefing: ['Review history before the recent activity.', 'Compare repayment behavior and utilization changes.', 'Keep fraud and credit-risk wording separate until review.'],
+  },
+  'Ghost Employee Fraud': {
+    party: 'business',
+    short: 'A payroll profile may not connect cleanly to a real employee relationship.',
+    objective: 'Review employee creation, payroll history, bank ownership, admin actions, business verification, and shared-account context.',
+    evidence: ['Employee Creation Record', 'Payroll History', 'Bank Account Ownership', 'Admin Logs', 'Business Verification'],
+    docs: ['Employee Creation Record', 'Payroll Run Report', 'Direct Deposit Form', 'Admin Change Log', 'Bank Verification Record'],
+    briefing: ['Review who created the employee record.', 'Confirm bank account ownership and payroll history.', 'Contact business/payroll owner if needed.'],
+  },
+  'Digital Wallet Fraud': {
+    party: 'consumer',
+    short: 'Wallet enrollment and tokenized transactions need device, MFA, and timeline review.',
+    objective: 'Review wallet enrollment, device used, tokenization, MFA/OTP, merchant transactions, and profile/login timeline.',
+    evidence: ['Wallet Enrollment', 'Tokenization Record', 'Device Context', 'MFA / OTP', 'Wallet Transactions'],
+    docs: ['Wallet Enrollment Confirmation', 'Tokenization Record', 'Device Activity Report', 'MFA / OTP Record', 'Wallet Transaction Log'],
+    briefing: ['Review whether wallet enrollment fits device history.', 'Compare MFA and login timeline.', 'Review wallet merchant activity.'],
+  },
+  Money Mule: {
+    party: 'consumer',
+    short: 'Account activity shows incoming funds followed by rapid movement or cash-out.',
+    objective: 'Review incoming/outgoing transfer pattern, linked accounts, cash-out, recipient history, and relationship context.',
+    evidence: ['Incoming Transfers', 'Outgoing Transfers', 'Linked Accounts', 'ATM / Cash-Out', 'Recipient History'],
+    docs: ['Transfer Log', 'Linked Account Verification', 'ATM Withdrawal Record', 'Recipient History', 'Contact Notes'],
+    briefing: ['Review velocity of funds.', 'Compare sender/recipient history.', 'Document cash-out and linked account context.'],
+  },
+  'Vendor Fraud': {
+    party: 'business',
+    short: 'Vendor payment or bank details changed and need ownership/business verification.',
+    objective: 'Review vendor profile, bank change request, invoice, ACH setup, prior payment history, and contact attempts.',
+    evidence: ['Vendor Profile', 'Bank Change Request', 'Invoice', 'ACH Setup', 'Prior Payment History', 'Contact Attempts'],
+    docs: ['Vendor Bank Change Request', 'Invoice', 'ACH Authorization', 'Vendor Profile', 'Business Verification Notes'],
+    briefing: ['Review whether the vendor change makes business sense.', 'Verify bank account ownership and history.', 'Document independent confirmation attempts.'],
+  },
+  'Merchant Fraud': {
+    party: 'merchant',
+    short: 'Merchant activity, refunds, delivery, and dispute history need review.',
+    objective: 'Review merchant profile, transaction pattern, refund behavior, dispute history, fulfillment, and customer contact records.',
+    evidence: ['Merchant Profile', 'Transaction Pattern', 'Refund History', 'Dispute History', 'Fulfillment Records'],
+    docs: ['Merchant Profile', 'Transaction Batch', 'Refund History', 'Delivery Records', 'Customer Communication'],
+    briefing: ['Review merchant history and dispute patterns.', 'Compare fulfillment evidence to claim records.', 'Avoid early merchant labels.'],
+  },
+  'ACH Fraud': {
+    party: 'business',
+    short: 'ACH setup, authorization, and debit/credit activity need verification.',
+    objective: 'Review ACH authorization, setup timeline, account ownership, business/vendor relationship, and debit/credit activity.',
+    evidence: ['ACH Authorization', 'Setup Timeline', 'Bank Account Verification', 'Debit / Credit History', 'Business Relationship'],
+    docs: ['ACH Authorization', 'Setup Confirmation', 'Bank Verification Record', 'ACH Activity Log', 'Business Contact Notes'],
+    briefing: ['Review who authorized ACH activity.', 'Verify bank account and business relationship.', 'Compare ACH timing to other events.'],
+  },
 };
-function makeCase(i) { const type = types[i % types.length]; return { id: `FA-2026-${1000 + i}`, type, customer: names[i % names.length], merchant: parties[i % parties.length], amount: Math.round(300 + ((i * 311) % 9500)), risk: i % 5 === 0 ? 'High' : i % 2 === 0 ? 'Medium' : 'Low', priority: i % 5 === 0 ? 'Critical' : i % 2 === 0 ? 'High' : 'Medium', address: `${7000 + i * 14} Violet Trace, Dallas, TX`, phone: `(214) 555-${String(1000 + i * 47).slice(0, 4)}`, email: `${names[i % names.length].toLowerCase().replace(' ', '.')}@examplemail.com`, dob: `198${i % 10}-0${(i % 9) + 1}-${String((i % 27) + 1).padStart(2, '0')}`, profileId: `PROFILE-${4000 + i * 9}`, device: `DEV-${90000 + i * 41}`, ip: `172.${16 + i}.${30 + i}.${40 + i}`, opened: `2026-07-${String((i % 28) + 1).padStart(2, '0')}`, ...details[type] }; }
-function initial() { return { page: 'Dashboard', cases: Array.from({ length: 24 }, (_, i) => makeCase(i)), selectedId: 'FA-2026-1000', notes: [], flags: [], docs: [], interview: [], reviewed: [], decision: '', completed: [], lastClosed: null, toolResult: null, intelResult: null, architectOpen: false, featureIdeas: [] }; }
-function load() { try { const saved = JSON.parse(localStorage.getItem(STORE)) || JSON.parse(localStorage.getItem(OLD_STORE)); return saved ? { ...initial(), ...saved, architectOpen: false, featureIdeas: saved.featureIdeas || [] } : initial(); } catch { return initial(); } }
-export default function App() {
-  const [s, setS] = useState(load); const c = useMemo(() => s.cases.find(x => x.id === s.selectedId) || s.cases[0] || s.lastClosed, [s]); useEffect(() => localStorage.setItem(STORE, JSON.stringify({ ...s, architectOpen: false })), [s]);
-  const patch = x => setS(v => ({ ...v, ...x })); const page = p => patch({ page: p }); const mark = x => setS(v => ({ ...v, reviewed: [...new Set([...v.reviewed, x])] })); const flag = (kind, text) => setS(v => ({ ...v, flags: [...v.flags, { kind, text, at: new Date().toLocaleTimeString() }] })); const addDoc = d => setS(v => ({ ...v, docs: [...new Set([...v.docs, d])] })); const openDocs = docs => setS(v => ({ ...v, docs: [...new Set([...v.docs, ...docs])], page: 'Documents' }));
-  const select = id => patch({ selectedId: id, page: 'Case Queue', notes: [], flags: [], docs: [], interview: [], reviewed: [], decision: '', toolResult: null, intelResult: null });
-  const complete = () => { if (!c || !s.decision) return; const score = Math.min(100, s.flags.length * 10 + s.reviewed.length * 5 + s.docs.length * 7 + s.interview.length * 4 + (s.decision === c.correct ? 20 : 0)); const closed = { ...c, decision: s.decision, score, flags: s.flags, docs: s.docs, notes: s.notes, interview: s.interview, closedAt: new Date().toLocaleString() }; const remaining = s.cases.filter(x => x.id !== c.id); setS({ ...s, cases: remaining, selectedId: remaining[0]?.id || '', completed: [closed, ...s.completed], lastClosed: closed, page: 'Case Debrief', notes: [], flags: [], docs: [], interview: [], reviewed: [], decision: '', toolResult: null, intelResult: null, architectOpen: false }); };
-  const saveIdea = idea => setS(v => ({ ...v, featureIdeas: [idea, ...(v.featureIdeas || [])] }));
-  const deleteIdea = id => setS(v => ({ ...v, featureIdeas: (v.featureIdeas || []).filter(x => x.id !== id) }));
-  const props = { s, c, patch, page, mark, flag, addDoc, openDocs, select, complete };
-  return <div className="app"><aside className="side"><div className="brand"><div className="logo">🕵🏽</div><div><h1>Fraud Academy</h1><p>Cozy Detective Command Center</p></div></div><nav className="nav">{pages.map((p, i) => <button key={p} className={s.page === p ? 'active' : ''} onClick={() => page(p)}>{icons[i]} {p}</button>)}</nav><div className="card mini"><b>🕒 SLA Clock</b><p className="muted">{c ? `${c.priority} priority case` : 'Queue cleared'}</p><div className="progress"><div className="bar" style={{ width: c?.priority === 'Critical' ? '84%' : '48%' }} /></div></div></aside><main className="main"><div className="top"><div><h2>{s.page}</h2><div className="muted">Find flags, tag evidence, make a decision, then debrief.</div></div><span className="pill">💜 v16 Feature Architect</span></div>{s.page === 'Dashboard' && <Dashboard {...props} />}{s.page === 'Case Queue' && <Queue {...props} />}{s.page === 'Customer 360' && <Customer {...props} />}{s.page === 'Identity Intel' && <Intel {...props} />}{s.page === 'Investigation Toolkit' && <Toolkit {...props} />}{s.page === 'Documents' && <Documents {...props} />}{s.page === 'Interview' && <Interview {...props} />}{s.page === 'Flags & Decision' && <Decision {...props} />}{s.page === 'Case Debrief' && <Debrief {...props} />}{s.page === 'Encyclopedia' && <Encyclopedia />}</main><button className="architect-fab" onClick={() => patch({ architectOpen: true })}>✨<span>New Upgrade Idea</span></button><FeatureArchitect open={s.architectOpen} ideas={s.featureIdeas || []} onClose={() => patch({ architectOpen: false })} onSave={saveIdea} onDelete={deleteIdea} /></div>;
+
+const finalOptions = {
+  'Account Takeover': ['Unauthorized Access Supported', 'Customer Claim Not Supported', 'More Review Needed', 'Escalate'],
+  'First Party Fraud': ['Customer Claim Supported', 'Customer Claim Not Supported', 'Insufficient Evidence', 'Escalate'],
+  'Chargeback / Card Dispute': ['Customer Claim Supported', 'Merchant Evidence Supported', 'Insufficient Evidence', 'Escalate'],
+  'Email Fraud / BEC': ['Hold Payment', 'Approve Change', 'Reject Change', 'Escalate', 'Request Business Verification'],
+  'Payroll Fraud / Direct Deposit Diversion': ['Hold', 'Approve Change', 'Reject Change', 'Escalate', 'Request Business Verification'],
+  'Credit Risk': ['Approve', 'Decline', 'Counteroffer', 'Request More Info', 'Escalate'],
+  'Check Fraud / Check Image Review': ['Pay', 'Return', 'Hold', 'Escalate', 'Request More Info'],
+  'Synthetic Identity': ['Approve', 'Decline', 'Escalate', 'Request More Info', 'Identity Review'],
+  'Bust-Out Fraud': ['Restrict', 'Decline', 'Escalate', 'Request More Info', 'Credit Review'],
+  'Ghost Employee Fraud': ['Hold Payroll', 'Reject Change', 'Escalate', 'Request Business Verification'],
+  'Digital Wallet Fraud': ['Customer Claim Supported', 'Customer Claim Not Supported', 'More Review Needed', 'Escalate'],
+  Money Mule: ['Restrict Account', 'Escalate', 'Refer for Review', 'Request More Info'],
+  'Vendor Fraud': ['Hold Payment', 'Approve Change', 'Reject Change', 'Escalate', 'Request Vendor Verification'],
+  'Merchant Fraud': ['Customer Claim Supported', 'Merchant Evidence Supported', 'Insufficient Evidence', 'Escalate'],
+  'ACH Fraud': ['Hold ACH', 'Return ACH', 'Approve ACH', 'Escalate', 'Request More Info'],
+};
+
+function makeCase(i) {
+  const type = CLAIMS[i % CLAIMS.length];
+  const play = claimPlaybook[type];
+  const person = people[i % people.length];
+  const business = businesses[i % businesses.length];
+  const owner = play.party === 'business' || play.party === 'merchant' ? business : person;
+  return {
+    id: `CASE-2026-${String(i + 4871).padStart(6, '0')}`,
+    type,
+    party: play.party,
+    customer: owner,
+    person,
+    business,
+    amount: Math.round(240 + ((i * 773) % 24800)),
+    priority: i % 5 === 0 ? 'Review Priority' : i % 3 === 0 ? 'Needs Follow-Up' : 'Needs Review',
+    difficulty: ['Level 1', 'Level 2', 'Level 3', 'Level 4'][i % 4],
+    received: `07/${String((i % 5) + 1).padStart(2, '0')}/2026`,
+    channel: ['Mobile Banking', 'Secure Message', 'Branch Intake', 'Business Portal', 'Dispute Form'][i % 5],
+    summary: play.short,
+    objective: play.objective,
+    evidence: play.evidence,
+    docs: play.docs,
+    briefing: play.briefing,
+    phone: `(555) 867-${String(5309 + i).slice(-4)}`,
+    email: `${person.toLowerCase().replaceAll(' ', '.')}@examplemail.com`,
+    address: `${1200 + i * 37} Maple Drive, Dallas, TX 7520${i % 9}`,
+    profileId: `CUST-${String(400000 + i * 97)}`,
+    accountAge: `${2 + (i % 8)} yrs ${i % 11} mos`,
+    relationship: `${1 + (i % 9)} years`,
+    device: `DEV-${90000 + i * 41}`,
+    ip: `172.${16 + i}.${30 + i}.${40 + i}`,
+    bankAccount: `****-${String(6789 + i).slice(-4)}`,
+    next: suggestedNext(type),
+  };
 }
-function Dashboard({ s, c, page, patch }) { return <div className="grid"><div className="grid three"><Stat label="Open Cases" val={s.cases.length} /><Stat label="Completed" val={s.completed.length} /><Stat label="Saved Ideas" val={(s.featureIdeas || []).length} /></div><div className="grid cols"><div className="card"><h3>💜 Feature Architect Active</h3><p>Version 1 is live: a pretty saved popup planner for upgrades, feature details, realistic bank data, and roadmap reminders.</p><div className="row"><button className="btn" onClick={() => patch({ architectOpen: true })}>Open Feature Architect</button><button className="btn secondary" onClick={() => page('Case Queue')}>Open Queue</button><button className="btn secondary" onClick={() => patch(initial())}>Reset Training</button></div></div><div className="card"><h3>💾 Saved Upgrade Plans</h3>{(s.featureIdeas || []).length ? s.featureIdeas.slice(0, 3).map(x => <div className="result" key={x.id}><b>{x.title}</b><p className="muted">{x.page} · {x.claimType} · {x.priority}</p></div>) : <p className="muted">No saved upgrade ideas yet. Open Feature Architect and capture the next spark.</p>}</div></div></div>; }
-function Stat({ label, val }) { return <div className="card"><div className="muted">{label}</div><div className="stat">{val}</div></div>; }
-function Queue({ s, c, select, page }) { if (!s.cases.length) return <div className="card"><h3>🎉 Queue Cleared</h3><p>All cases are complete.</p></div>; return <div className="split"><div className="card"><h3>📥 Claim Queue ({s.cases.length})</h3>{s.cases.map(x => <button className={c?.id === x.id ? 'case active' : 'case'} key={x.id} onClick={() => select(x.id)}><div className="case-title"><span>{x.id}</span><span className={`tag risk-${x.risk.toLowerCase()}`}>{x.priority}</span></div><div>{x.customer}</div><div className="muted mini">{x.type} · ${x.amount.toLocaleString()}</div></button>)}</div><div className="card"><h3>📁 Full Claim File</h3><Claim c={c} /><div className="row"><button className="btn" onClick={() => page('Customer 360')}>Customer 360</button><button className="btn secondary" onClick={() => page('Investigation Toolkit')}>Toolkit</button></div></div></div>; }
-function Claim({ c }) { if (!c) return <p>No case selected.</p>; return <><KV k="Claim Type" v={c.type} /><KV k="Customer" v={c.customer} /><KV k="Amount" v={`$${c.amount.toLocaleString()}`} /><KV k="Merchant / Party" v={c.merchant} /><KV k="Opened" v={c.opened} /><KV k="Summary" v={c.summary} /><KV k="Training Answer" v={c.correct} /></>; }
-function Customer({ c, mark, flag, openDocs }) { useEffect(() => mark('Customer 360'), []); const high = c.risk === 'High'; return <div className="grid cols"><div className="card"><h3>👤 Customer 360</h3><div className="row"><div className="logo">{c.customer[0]}</div><div><h2>{c.customer}</h2><span className={`tag risk-${c.risk.toLowerCase()}`}>{c.risk} Risk</span></div></div><KV k="DOB" v={c.dob} /><KV k="Profile Ref" v={c.profileId} /><KV k="Address" v={c.address} /><KV k="Email" v={c.email} /><KV k="Phone" v={c.phone} /><KV k="Customer Since" v="April 2019" /><KV k="Products" v="Checking, Savings, Credit Card" /></div><div className="card"><h3>🏦 Relationship & Behavior</h3><KV k="Account Age" v="7 years, 3 months" /><KV k="Prior Claims" v={high ? '2 prior digital-access claims and 1 card dispute' : 'No recent fraud claims'} /><KV k="Last Contact" v={high ? '3 days ago - password reset help' : '42 days ago - balance inquiry'} /><KV k="Normal Login Hours" v="8 AM - 9 PM" /><KV k="Typical Device" v={high ? 'iPhone 15 trusted device' : `${c.device} trusted device`} /><KV k="Average Transaction" v="$87" /><KV k="Largest Purchase" v="$1,240" /></div><div className="card"><h3>🔒 Account History</h3><div className={`result ${high ? 'bad' : 'good'}`}><b>Profile Change Summary</b><KV k="Password" v={high ? 'Changed after new-device login' : 'No recent change'} /><KV k="Recovery Email" v={high ? 'Updated during same session' : 'No change in last 90 days'} /><KV k="Phone" v={high ? 'Changed before OTP delivery' : 'Trusted phone unchanged'} /><KV k="MFA Device" v={high ? 'New SMS route enrolled' : 'Existing trusted MFA route'} /><KV k="Security Questions" v={high ? 'Updated after password reset' : 'No recent update'} /></div><div className="row"><button className="btn secondary" onClick={() => openDocs(['Profile Change History'])}>Open Profile Change Report</button><button className="btn red" onClick={() => flag('red', 'Customer 360: profile changes occurred before loss')}>Tag Profile Risk</button></div></div><div className="card"><h3>📱 Devices & Locations</h3><KV k="Trusted Device" v={high ? 'iPhone 15 - trusted before claim' : `${c.device} - trusted`} /><KV k="New Device" v={high ? `${c.device} - first seen during claim` : 'None detected'} /><KV k="Normal Region" v="Dallas, TX" /><KV k="Current Signal" v={high ? 'New region or proxy-style signal' : 'Normal customer region'} /><KV k="VPN / Proxy" v={high ? 'Possible proxy-style signal' : 'No signal detected'} /></div><div className="card"><h3>📞 Contact & Prior Fraud</h3><KV k="7/02 Contact" v={high ? 'Customer called about security alert' : 'No contact'} /><KV k="6/18 Contact" v="Password reset support record" /><KV k="5/30 Contact" v="Address verified" /><KV k="Prior Fraud" v={high ? 'First-party fraud closed; card dispute approved; no prior confirmed ATO' : 'No confirmed prior fraud pattern'} /><KV k="Investigator Note" v="Use Customer 360 to compare permanent profile history against active Toolkit evidence." /></div></div>; }
-function Intel({ c, s, patch, mark, flag }) { useEffect(() => mark('Identity Intel'), []); const run = type => patch({ intelResult: { type, value: type === 'Profile' ? c.profileId : type === 'Phone' ? c.phone : type === 'Email' ? c.email : type === 'Device' ? c.device : c.address } }); return <div className="grid cols"><div className="card"><h3>🛰️ Identity Intel Workspace</h3><p className="muted">Search fictional profile records and tag what matters.</p><div className="tools">{['Profile', 'Phone', 'Email', 'Address', 'Device', 'IP'].map(x => <button className="tool" key={x} onClick={() => run(x)}>🔎 {x} Search</button>)}</div></div><div className="card"><h3>🔎 Results</h3>{s.intelResult ? <div className={`result ${c.risk === 'High' ? 'warn' : 'good'}`}><KV k="Search Type" v={s.intelResult.type} /><KV k="Value" v={s.intelResult.value} /><KV k="Confidence" v={c.risk === 'High' ? '62%' : '94%'} /><KV k="Linked Records" v={c.risk === 'High' ? 'Shared or recent identifiers found.' : 'No unrelated profile links.'} /><div className="row"><button className="btn green" onClick={() => flag('green', `${s.intelResult.type} supports profile`) }>Tag Green</button><button className="btn red" onClick={() => flag('red', `${s.intelResult.type} needs review`) }>Tag Red</button></div></div> : <p className="muted">Run a search to see records.</p>}</div></div>; }
-function Toolkit({ c, s, patch, mark, flag, openDocs }) { useEffect(() => mark('Investigation Toolkit'), []); return <div className="grid cols"><div className="card"><h3>🧰 Investigation Toolkit</h3><p className="muted">Tools change by claim type: <b>{c.type}</b>. Results now include fictional records, evidence signals, documents, and next steps.</p><div className="tools">{(c.tools || []).map(t => <button className={s.toolResult === t ? 'tool active' : 'tool'} key={t} onClick={() => patch({ toolResult: t })}>{toolIcon(t)} {t}</button>)}</div></div><div className="card"><h3>Tool Results</h3>{s.toolResult ? <ToolResult c={c} tool={s.toolResult} flag={flag} openDocs={openDocs} /> : <p className="muted">Pick a tool to search detailed fictional records.</p>}</div></div>; }
-function ToolResult({ c, tool, flag, openDocs }) { const r = getToolkitRecord(tool, c); return <div className={r.level === 'red' ? 'result bad' : r.level === 'yellow' ? 'result warn' : 'result good'}><h3>{r.title}</h3><p>{r.summary}</p>{r.rows.map(([k, v]) => <KV key={k} k={k} v={v} />)}<h3>Evidence Signals</h3>{r.signals.map(x => <div className="result" key={x}>{x}</div>)}<h3>Related Documents</h3>{r.docs.map(d => <button className="case" key={d} onClick={() => openDocs([d])}>📄 Open {d}</button>)}<h3>Next Steps</h3>{r.next.map(x => <div className="result" key={x}>{x}</div>)}<div className="row"><button className="btn green" onClick={() => flag('green', `${tool}: ${r.signals[0]}`)}>Tag Green</button><button className="btn red" onClick={() => flag('red', `${tool}: ${r.signals[0]}`)}>Tag Red</button></div></div>; }
-function Documents({ c, s, addDoc, flag, mark }) { useEffect(() => mark('Documents'), []); const docs = ['Driver License', 'Bank Statement', 'Paystub', 'Police Report', 'Merchant Receipt', 'Proof of Delivery', 'Business License', 'Email Header', 'Login Timeline', 'Profile Change History', 'Session History', 'Device Fingerprint Report', 'Authorization Log', 'Order Match Sheet', 'Payment Timeline', 'Carrier Timeline', 'Prior Claims Memo']; return <div className="grid cols"><div className="card"><h3>📄 Request Documents</h3>{docs.map(d => <button className="case" key={d} onClick={() => addDoc(d)}>📄 {d}</button>)}</div><div className="card"><h3>📂 Document Viewer</h3>{s.docs.length ? s.docs.map(d => { const report = getDocumentReport(d, c); return <div className="doc" key={d}><h3>{d}</h3><KV k="Customer" v={c.customer} /><KV k="Reference" v={`${c.id}-${d.slice(0, 3).toUpperCase()}`} /><KV k="Claim Type" v={c.type} /><KV k="Status" v={report.status} /><KV k="Confidence" v={report.confidence} /><h3>Report Details</h3>{report.sections.map(([k, v]) => <KV key={k} k={k} v={v} />)}<h3>Investigator Notes</h3>{report.notes.map(x => <div className="result" key={x}>{x}</div>)}<h3>Training Tip</h3><div className="result good">{report.tip}</div><div className="row"><button className="btn green" onClick={() => flag('green', `${d}: supports record`)}>Tag Green</button><button className="btn red" onClick={() => flag('red', `${d}: needs review`)}>Tag Red</button></div></div>; }) : <p className="muted">No documents requested yet.</p>}</div></div>; }
-function Interview({ c, s, patch, mark, flag }) { useEffect(() => mark('Interview'), []); const ask = q => { const prior = s.interview.filter(x => x.q === q).length; const reply = getInterviewAnswer(c, q, prior); patch({ interview: [...s.interview, { q, a: reply.answer, tone: reply.tone, credibility: reply.credibility, clue: reply.clue }] }); }; const last = s.interview[s.interview.length - 1]; return <div className="grid cols"><div className="card"><h3>🎤 Customer Interview</h3>{last && <div className="result warn"><KV k="Tone" v={last.tone} /><KV k="Credibility" v={`${last.credibility}%`} /><KV k="New Clue" v={last.clue} /></div>}{c.questions.map(q => <button className="case" key={q} onClick={() => ask(q)}>{q}</button>)}</div><div className="card"><h3>Transcript</h3>{s.interview.length ? s.interview.map((x, i) => <div key={`${x.q}-${i}`}><div className="bubble inv"><b>Investigator:</b> {x.q}</div><div className="bubble cust"><b>Customer:</b> {x.a}</div>{x.clue && <div className="result warn"><b>Interview clue:</b> {x.clue}</div>}</div>) : <p className="muted">No questions asked yet.</p>}<div className="row"><button className="btn green" onClick={() => flag('green', 'Interview supports claim')}>Tag Green</button><button className="btn red" onClick={() => flag('red', 'Interview has inconsistencies')}>Tag Red</button></div></div></div>; }
-function Decision({ c, s, patch, complete }) { return <div className="grid cols"><div className="card"><h3>⚖️ Flags & Decision</h3>{s.flags.length ? s.flags.map((f, i) => <div className={`result ${f.kind === 'red' ? 'bad' : 'good'}`} key={i}><b>{f.kind === 'red' ? '🔴' : '🟢'} {f.text}</b><br /><span className="muted">{f.at}</span></div>) : <p className="muted">No flags tagged yet.</p>}</div><div className="card"><h3>Final Decision</h3>{decisions.map(d => <button key={d} className={s.decision === d ? 'choice active' : 'choice'} onClick={() => patch({ decision: d })}>{d}</button>)}<button className="btn" disabled={!s.decision} onClick={complete}>Complete Case</button><p className="muted">Training answer: {c?.correct}</p></div></div>; }
-function Debrief({ s }) { const d = s.lastClosed; if (!d) return <div className="card"><h3>📖 Case Debrief</h3><p>Complete a case to generate debrief.</p></div>; const coach = getAICoachReview(d); return <div className="grid"><div className="card"><h3>📖 Case Debrief: {d.id}</h3><KV k="Claim Type" v={d.type} /><KV k="Your Decision" v={d.decision} /><KV k="Recommended" v={d.correct} /><KV k="Score" v={`${d.score}%`} /><p>{d.summary}</p></div><div className="card"><h3>🤖 AI Coach Review</h3><div className={`result ${coach.tone}`}><b>{coach.headline}</b><KV k="Coach Verdict" v={coach.verdict} /><KV k="Confidence" v={`${coach.confidence}%`} /></div><h3>Why</h3>{coach.why.map(x => <div className="result" key={x}>{x}</div>)}<h3>What To Review</h3>{coach.missed.length ? coach.missed.map(x => <div className="result warn" key={x}>{x}</div>) : <div className="result good">You covered the major evidence categories for this case.</div>}<h3>Think Like a Senior Investigator</h3><div className="result good">{coach.seniorTip}</div><h3>Next Practice Steps</h3>{coach.next.map(x => <div className="result" key={x}>{x}</div>)}</div><div className="grid cols"><div className="card"><h3>Evidence You Tagged</h3>{d.flags.length ? d.flags.map((f, i) => <div className={`result ${f.kind === 'red' ? 'bad' : 'good'}`} key={i}>{f.text}</div>) : <p>No flags were tagged.</p>}</div><div className="card"><h3>Documents Reviewed</h3>{d.docs.length ? d.docs.map(x => <div className="result" key={x}>{x}</div>) : <p>No documents reviewed.</p>}</div></div></div>; }
-function Encyclopedia() { return <div className="grid cols"><div className="card"><h3>📚 Fraud Claim Types</h3>{types.map(t => <div className="result" key={t}><b>{t}</b><p className="muted">{details[t].summary}</p></div>)}</div><div className="card"><h3>Investigator Rules</h3><p>Use Customer 360, run Identity Intel, search claim-specific toolkit records, open documents, interview the customer, tag flags, then decide.</p></div></div>; }
-function KV({ k, v }) { return <div className="kv"><b>{k}</b><span>{v}</span></div>; }
-function toolIcon(t) { if (t.includes('Device') || t.includes('IP') || t.includes('Email')) return '🌐'; if (t.includes('Evidence') || t.includes('Shipping')) return '📄'; if (t.includes('Credit') || t.includes('Income') || t.includes('Debt') || t.includes('Cash')) return '📊'; return '🔍'; }
+
+function suggestedNext(type) {
+  if (type.includes('BEC') || type.includes('Vendor') || type.includes('Ghost') || type.includes('Payroll') || type.includes('ACH')) return 'Bank Account Verification';
+  if (type.includes('Synthetic')) return 'Identity Intel';
+  if (type.includes('Wallet') || type.includes('Account Takeover')) return 'Login History';
+  if (type.includes('Check')) return 'Evidence Center';
+  if (type.includes('Bust') || type.includes('Credit')) return 'Financial Investigation';
+  return 'Customer 360';
+}
+
+function baseState() {
+  return {
+    page: 'Dashboard',
+    cases: Array.from({ length: 30 }, (_, i) => makeCase(i)),
+    selectedId: 'CASE-2026-004871',
+    filter: 'All Cases',
+    reviewed: [],
+    notes: [],
+    docs: [],
+    contacts: [],
+    completed: [],
+    finalDecision: '',
+    lastClosed: null,
+    architectOpen: false,
+    featureIdeas: [],
+  };
+}
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE)) || JSON.parse(localStorage.getItem(OLD_STORE));
+    if (!saved) return baseState();
+    return { ...baseState(), ...saved, architectOpen: false, featureIdeas: saved.featureIdeas || [] };
+  } catch {
+    return baseState();
+  }
+}
+
+export default function App() {
+  const [s, setS] = useState(loadState);
+  const current = useMemo(() => s.cases.find(x => x.id === s.selectedId) || s.cases[0] || s.lastClosed, [s.cases, s.selectedId, s.lastClosed]);
+
+  useEffect(() => {
+    localStorage.setItem(STORE, JSON.stringify({ ...s, architectOpen: false }));
+  }, [s]);
+
+  const patch = update => setS(prev => ({ ...prev, ...update }));
+  const go = page => setS(prev => ({ ...prev, page, reviewed: pageReview(prev.reviewed, page) }));
+  const mark = item => setS(prev => ({ ...prev, reviewed: pageReview(prev.reviewed, item) }));
+  const addNote = text => setS(prev => ({ ...prev, notes: [{ text, at: new Date().toLocaleTimeString() }, ...prev.notes] }));
+  const addDocs = docs => setS(prev => ({ ...prev, docs: [...new Set([...prev.docs, ...docs])], page: 'Evidence Center', reviewed: pageReview(prev.reviewed, 'Evidence Center') }));
+  const addContact = text => setS(prev => ({ ...prev, contacts: [{ text, at: new Date().toLocaleTimeString() }, ...prev.contacts] }));
+  const selectCase = id => setS(prev => ({ ...prev, selectedId: id, page: 'Case Briefing', reviewed: [], notes: [], docs: [], contacts: [], finalDecision: '' }));
+  const saveIdea = idea => setS(prev => ({ ...prev, featureIdeas: [idea, ...(prev.featureIdeas || [])] }));
+  const deleteIdea = id => setS(prev => ({ ...prev, featureIdeas: (prev.featureIdeas || []).filter(x => x.id !== id) }));
+  const complete = () => {
+    if (!current || !s.finalDecision) return;
+    const closed = { ...current, finalDecision: s.finalDecision, reviewed: s.reviewed, docs: s.docs, contacts: s.contacts, notes: s.notes, closedAt: new Date().toLocaleString() };
+    const remaining = s.cases.filter(x => x.id !== current.id);
+    setS(prev => ({ ...prev, cases: remaining, selectedId: remaining[0]?.id || '', completed: [closed, ...prev.completed], lastClosed: closed, page: 'Investigation Summary', reviewed: [], notes: [], docs: [], contacts: [], finalDecision: '' }));
+  };
+
+  const props = { s, current, patch, go, mark, addNote, addDocs, addContact, selectCase, complete };
+
+  return (
+    <div className="app-shell">
+      <Sidebar s={s} current={current} go={go} />
+      <main className="workspace-main">
+        <TopBar s={s} current={current} patch={patch} />
+        {s.page === 'Dashboard' && <Dashboard {...props} />}
+        {s.page === 'Case Queue' && <CaseQueue {...props} />}
+        {s.page === 'Case Briefing' && <CaseBriefing {...props} />}
+        {s.page === 'Customer 360' && <Customer360 {...props} />}
+        {s.page === 'Identity Intel' && <IdentityIntel {...props} />}
+        {s.page === 'Login History' && <LoginHistory {...props} />}
+        {s.page === 'Device Intel' && <DeviceIntel {...props} />}
+        {s.page === 'Financial Investigation' && <FinancialInvestigation {...props} />}
+        {s.page === 'Business Intelligence' && <BusinessIntelligence {...props} />}
+        {s.page === 'Bank Account Verification' && <BankAccountVerification {...props} />}
+        {s.page === 'Evidence Center' && <EvidenceCenter {...props} />}
+        {s.page === 'Customer Contact & Interview' && <CustomerContact {...props} />}
+        {s.page === 'Timeline Builder' && <TimelineBuilder {...props} />}
+        {s.page === 'Investigation Workspace' && <InvestigationWorkspace {...props} />}
+        {s.page === 'Investigation Summary' && <InvestigationSummary {...props} />}
+        {s.page === 'Case Review' && <CaseReview {...props} />}
+        {s.page === 'Luna AI' && <LunaAI {...props} />}
+        {s.page === 'Fraud Library' && <FraudLibrary {...props} />}
+        {s.page === 'Learning Paths' && <LearningPaths {...props} />}
+      </main>
+      <MobileNav s={s} go={go} />
+      <button className="architect-fab" onClick={() => patch({ architectOpen: true })}>✨<span>New Upgrade Idea</span></button>
+      <FeatureArchitect open={s.architectOpen} ideas={s.featureIdeas || []} onClose={() => patch({ architectOpen: false })} onSave={saveIdea} onDelete={deleteIdea} />
+    </div>
+  );
+}
+
+function pageReview(list, page) {
+  if (['Dashboard', 'Case Queue', 'Luna AI', 'Fraud Library', 'Learning Paths'].includes(page)) return list;
+  return [...new Set([...list, page])];
+}
+
+function Sidebar({ s, current, go }) {
+  return (
+    <aside className="global-sidebar">
+      <div className="brand-lockup">
+        <div className="brand-mark">FA</div>
+        <div><h1>Fraud Academy</h1><p>Investigator Workspace</p></div>
+      </div>
+      <nav className="sidebar-nav">
+        {SIDEBAR.map(item => <button key={item.id} onClick={() => go(item.id)} className={s.page === item.id ? 'active' : ''}><span>{item.icon}</span>{item.label}</button>)}
+      </nav>
+      <div className="luna-card"><div className="luna-cat">🐈‍⬛</div><b>Luna AI Mentor</b><p>Evidence first. Conclusions later.</p></div>
+      <button className="current-case-card" onClick={() => go('Case Briefing')}>
+        <span>Current Case</span><b>{current?.id || 'Queue Clear'}</b><small>{current?.type || 'No active case'}</small>
+      </button>
+    </aside>
+  );
+}
+
+function MobileNav({ s, go }) {
+  const items = SIDEBAR.slice(0, 6);
+  return <div className="mobile-nav">{items.map(x => <button key={x.id} className={s.page === x.id ? 'active' : ''} onClick={() => go(x.id)}><span>{x.icon}</span><small>{x.label.split(' ')[0]}</small></button>)}</div>;
+}
+
+function TopBar({ s, current, patch }) {
+  return <header className="topbar"><div><p className="eyebrow">Investigation Workspace</p><h2>{s.page}</h2><p className="muted">Teaching investigators how to think, not what to think.</p></div><div className="top-actions"><span className="pill">{current?.id || 'No Case'}</span><span className="pill glow">{current?.priority || 'Ready'}</span><button className="soft-btn" onClick={() => patch(baseState())}>Reset Training</button></div></header>;
+}
+
+function Dashboard({ s, current, go }) {
+  const counts = countByClaim(s.cases);
+  return <section className="dash-grid">
+    <HeroCard title="Good evening, Ree" subtitle="Ready to solve another case without giving away the answer?" action="Continue Investigation" onAction={() => go('Investigation Workspace')} />
+    <div className="stat-row"><Stat label="Active Cases" value={s.cases.length} /><Stat label="Closed Cases" value={s.completed.length} /><Stat label="Workspaces Reviewed" value={s.reviewed.length} /><Stat label="Expanded Claim Types" value={CLAIMS.length} /></div>
+    <div className="panel active-case"><h3>Active Case</h3><CaseSnapshot c={current} /><div className="button-row"><button onClick={() => go('Case Briefing')}>Case Briefing</button><button onClick={() => go(current?.next || 'Customer 360')}>Suggested Next</button></div></div>
+    <div className="panel"><h3>Case Mix</h3>{Object.entries(counts).slice(0, 8).map(([type, count]) => <div className="mini-row" key={type}><span>{type}</span><b>{count}</b></div>)}</div>
+    <div className="panel"><h3>Daily Goals</h3><Checklist items={['Review evidence before conclusions', 'Use neutral labels', 'Draft summary from reviewed records', 'Save one Luna coaching insight']} done={s.reviewed.length} /></div>
+  </section>;
+}
+
+function HeroCard({ title, subtitle, action, onAction }) {
+  return <div className="hero-card"><div><p className="eyebrow">Luna says ✨</p><h2>{title}</h2><p>{subtitle}</p></div><button onClick={onAction}>{action}</button></div>;
+}
+
+function Stat({ label, value }) { return <div className="stat-card"><span>{label}</span><b>{value}</b></div>; }
+
+function CaseQueue({ s, current, patch, selectCase }) {
+  const filtered = s.filter === 'All Cases' ? s.cases : s.cases.filter(c => c.type === s.filter);
+  return <section className="queue-layout"><div className="queue-list"><div className="section-head"><h3>Case Queue</h3><select value={s.filter} onChange={e => patch({ filter: e.target.value })}><option>All Cases</option>{CLAIMS.map(c => <option key={c}>{c}</option>)}</select></div>{filtered.map(c => <button key={c.id} className={`case-card ${current?.id === c.id ? 'active' : ''}`} onClick={() => selectCase(c.id)}><span className="case-id">{c.id}</span><b>{c.type}</b><small>{c.customer} · {c.priority}</small><p>{c.summary}</p></button>)}</div><aside className="queue-side"><div className="panel"><h3>Today’s Snapshot</h3><Stat label="Active" value={s.cases.length} /><Stat label="Completed" value={s.completed.length} /></div><div className="panel"><h3>Luna Tip</h3><p>Choose a case, read the briefing first, then gather evidence. Do not jump straight to a decision.</p></div></aside></section>;
+}
+
+function CaseBriefing({ current, go }) {
+  return <section className="workspace-grid"><div className="panel xl"><h3>What am I investigating?</h3><CaseSnapshot c={current} /><h4>Objectives</h4>{current?.briefing.map(x => <div className="evidence-line" key={x}>✦ {x}</div>)}<div className="button-row"><button onClick={() => go('Investigation Workspace')}>Start Investigation</button><button onClick={() => go(current?.next || 'Customer 360')}>Open Suggested Workspace</button></div></div><CoachCard title="Briefing Rule" text="This is a supervisor assignment. It tells you what happened, what is known, and what needs to be verified." /></section>;
+}
+
+function Customer360({ current, addDocs, go }) {
+  return <section className="customer360"><div className="customer-profile panel"><div className="avatar">{current?.customer?.[0] || 'C'}</div><h3>{current?.customer}</h3><p>{current?.profileId}</p><span className="status-pill">Active Customer</span><Info k="Customer Since" v="2017" /><Info k="Relationship" v={current?.relationship} /><Info k="Products" v="Checking · Savings · Card" /><Info k="Channel" v={current?.channel} /></div><div className="panel"><h3>Relationship Overview</h3><div className="metric-grid"><Metric label="Prior Claims" value="4" /><Metric label="Verified Phone" value="Yes" /><Metric label="Verified Email" value="Yes" /><Metric label="Account Age" value={current?.accountAge} /></div><h4>Contact Information</h4><Info k="Phone" v={current?.phone} /><Info k="Email" v={current?.email} /><Info k="Address" v={current?.address} /></div><div className="panel"><h3>Profile Change Timeline</h3>{['Password updated', 'Phone number updated', 'Email address updated', 'MFA enabled', 'Secure message sent'].map((x, i) => <TimelineItem key={x} label={x} time={`07/0${i + 1}/2026 · ${9 + i}:1${i} AM`} />)}<button onClick={() => addDocs(['Profile Change Timeline', 'Customer Snapshot'])}>Add Profile Evidence</button></div><div className="panel"><h3>Current Case Snapshot</h3><CaseSnapshot c={current} /><button onClick={() => go('Identity Intel')}>Go to Identity Intel</button></div></section>;
+}
+
+function IdentityIntel({ current, addDocs }) {
+  const synthetic = current?.type === 'Synthetic Identity';
+  return <Workspace title="Identity Intel" question="Who is this person, business, employee, vendor, or profile connected to?" current={current} addDocs={addDocs} docs={['Identity Summary', 'Address History', 'Phone / Email Age', 'Public Records', 'Business Links']}>
+    <div className="search-card"><h3>People Search & Intelligence</h3><div className="input-row"><input value={current?.profileId || ''} readOnly /><button>Run Search</button></div><p className="muted">Search by SSN/ID, name + DOB, phone, email, business, employee, vendor, or merchant relationship.</p></div>
+    <RecordList items={[['Identity Depth', synthetic ? 'Limited public-record depth; needs review' : 'Multiple historical records returned'], ['Address History', 'Current and previous addresses returned'], ['Phone / Email Age', synthetic ? 'Newer contact points in training record' : 'Longstanding contact points'], ['Business Links', current?.business], ['Associates', 'Fictional household and business links']]} />
+  </Workspace>;
+}
+
+function LoginHistory({ current, addDocs }) {
+  return <Workspace title="Login History" question="Does this login activity make sense for the customer and case?" current={current} addDocs={addDocs} docs={['Login Activity Report', 'MFA / OTP Record', 'Admin Portal Log']}>
+    <RecordList items={[['Successful Login', `Dallas, TX · Known browser · ${current?.device}`], ['New Session', `${current?.ip} · First seen for this case`], ['MFA Event', 'OTP challenge completed'], ['Profile Event', 'Contact update near case timeline'], ['Portal Context', current?.party === 'business' ? 'Business or payroll portal access' : 'Mobile banking access']]} />
+  </Workspace>;
+}
+
+function DeviceIntel({ current, addDocs }) {
+  return <Workspace title="Device Intel" question="Does this device make sense for the customer, employee, vendor, or session?" current={current} addDocs={addDocs} docs={['Device Activity Report', 'Wallet Enrollment Record', 'Device Comparison']}>
+    <RecordList items={[['Device Fingerprint', current?.device], ['First Seen', 'During current case timeline'], ['Browser', 'Mobile Safari training record'], ['Timezone / Language', 'Central time / English'], ['Device Links', 'Linked to case profile and selected session'], ['Wallet Context', current?.type.includes('Wallet') ? 'Wallet enrollment attached' : 'No wallet enrollment in selected packet']]} />
+  </Workspace>;
+}
+
+function FinancialInvestigation({ current, addDocs }) {
+  return <Workspace title="Financial Investigation" question="Does the money make sense?" current={current} addDocs={addDocs} docs={['Financial Activity Report', 'Transfer Timeline', 'Deposit Review']}>
+    <div className="metric-grid"><Metric label="Case Amount" value={`$${current?.amount.toLocaleString()}`} /><Metric label="Account Age" value={current?.accountAge} /><Metric label="Movement" value="Timeline Review" /><Metric label="Linked Accounts" value="2" /></div>
+    <RecordList items={[['Deposit Behavior', current?.type.includes('Check') ? 'Check deposit and hold timeline available' : 'Recurring deposit pattern available'], ['Cash / Transfer Activity', current?.type === 'Money Mule' ? 'Incoming funds followed by outgoing movement' : 'Activity requires timeline comparison'], ['ACH / Wallet', current?.type.includes('ACH') || current?.type.includes('Wallet') ? 'Claim-specific payment rail records available' : 'No special payment rail selected'], ['Credit Context', current?.type.includes('Credit') || current?.type.includes('Bust') ? 'Utilization and repayment trend required' : 'Credit view optional']]} />
+  </Workspace>;
+}
+
+function BusinessIntelligence({ current, addDocs }) {
+  return <Workspace title="Business Intelligence" question="Does this business activity make sense?" current={current} addDocs={addDocs} docs={['Business Profile', 'Website Review', 'Public Records', 'Verification Attempts']}>
+    <RecordList items={[['Business Name', current?.business], ['Public Record', 'Active registration in fictional SOS record'], ['Website / Online Presence', 'Website, domain, and reviews available'], ['Location Logic', 'Compare address, service area, employee/vendor location'], ['Verification Attempts', current?.party === 'business' ? 'Business contact required' : 'Optional for this case']]} />
+  </Workspace>;
+}
+
+function BankAccountVerification({ current, addDocs }) {
+  return <Workspace title="Bank Account Verification" question="Does this bank account make sense for this setup or payment change?" current={current} addDocs={addDocs} docs={['Bank Account Verification', 'Ownership Link Review', 'Verification Attempt Log']}>
+    <RecordList items={[['Bank Name', 'Neon Federal Bank'], ['Masked Account', current?.bankAccount], ['Account Type', current?.type.includes('Payroll') || current?.type.includes('Vendor') ? 'Business checking / payroll destination' : 'Consumer checking'], ['Open Date', '03/14/2021'], ['First Seen', 'Current case timeline'], ['Ownership Link', 'Name/business match requires review'], ['Prior Payment Use', current?.type.includes('Vendor') ? 'New vendor payment destination' : 'Limited prior use']]} />
+  </Workspace>;
+}
+
+function EvidenceCenter({ current, s, addDocs }) {
+  const docs = [...new Set([...(current?.docs || []), ...s.docs])];
+  return <section className="evidence-layout"><div className="panel"><h3>Evidence Inbox</h3>{docs.map(d => <button className="doc-chip" key={d}>{d}</button>)}<button onClick={() => addDocs(current?.docs || [])}>Generate Claim Packet</button></div><div className="document-viewer"><h3>{docs[0] || 'Select Document'}</h3><p>Training document generated for {current?.type}. Evidence is fictional and should be reviewed in context.</p><Info k="Case" v={current?.id} /><Info k="Related Party" v={current?.customer} /><Info k="Document Purpose" v="Supports investigation context, not a final decision." /><Info k="Review Question" v="Does this document support, contradict, or add context to the claim?" /></div></section>;
+}
+
+function CustomerContact({ current, addContact }) {
+  return <section className="workspace-grid"><div className="panel xl"><h3>Initial Contact / Claim Intake</h3><RecordList items={[['Channel', current?.channel], ['Initial Statement', current?.summary], ['Contact Type', current?.party === 'business' ? 'Business / vendor / payroll contact' : 'Customer contact'], ['Follow-Up Needed', ['Account Takeover', 'Email Fraud / BEC', 'Payroll Fraud / Direct Deposit Diversion', 'Synthetic Identity', 'Ghost Employee Fraud'].includes(current?.type) ? 'Yes, targeted questions available' : 'Use intake and documents first']]} /><button onClick={() => addContact(`Intake reviewed for ${current?.type}`)}>Mark Intake Reviewed</button></div><CoachCard title="Interview Rule" text="Not every claim needs a forced interview. Use intake records, secure messages, dispute forms, merchant contact, and follow-up questions only when needed." /></section>;
+}
+
+function TimelineBuilder({ current }) {
+  const events = ['Case received', 'Profile or relationship record reviewed', ...current.evidence.slice(0, 4), 'Document request / evidence packet generated', 'Investigation summary drafted'];
+  return <section className="panel xl"><h3>Timeline Builder</h3><p className="muted">What happened first, and how do events connect?</p><div className="timeline">{events.map((e, i) => <TimelineItem key={e} label={e} time={`Step ${i + 1}`} />)}</div></section>;
+}
+
+function InvestigationWorkspace({ current, s, go, addNote }) {
+  return <section className="workspace-grid"><div className="panel xl"><h3>Investigation Workspace</h3><CaseSnapshot c={current} /><h4>Workspace Progress</h4><Checklist items={['Customer 360', 'Identity Intel', 'Login History', 'Device Intel', 'Financial Investigation', 'Evidence Center', 'Timeline Builder']} checked={s.reviewed} /><div className="button-row">{current?.evidence.map(x => <button key={x} onClick={() => addNote(`Reviewed ${x} for ${current.type}`)}>{x}</button>)}</div></div><div className="panel"><h3>Suggested Next</h3><p>{current?.next}</p><button onClick={() => go(current?.next || 'Customer 360')}>Open Workspace</button><h3>AI Case Summary Draft</h3><p className="muted">Luna will draft the summary from reviewed evidence. Investigator edits and approves later.</p></div></section>;
+}
+
+function InvestigationSummary({ s, current, go }) {
+  const c = s.lastClosed || current;
+  return <section className="panel xl"><h3>Investigation Summary Draft</h3><p className="muted">AI-assisted, not AI-controlled. The investigator owns the final summary.</p><div className="summary-box"><p><b>Claim Type:</b> {c?.type}</p><p><b>What was checked:</b> {(c?.reviewed || s.reviewed).join(', ') || 'No reviewed evidence recorded yet.'}</p><p><b>Findings:</b> Records were reviewed for consistency across customer, identity, digital, financial, document, and timeline context.</p><p><b>Decision / Action:</b> {c?.finalDecision || 'Pending Case Review'}</p><p><b>Short explanation:</b> Evidence should be documented using neutral language and routed to Case Review for the final outcome.</p></div><button onClick={() => go('Case Review')}>Go to Case Review</button></section>;
+}
+
+function CaseReview({ s, current, patch, complete }) {
+  const options = finalOptions[current?.type] || ['More Review Needed', 'Escalate', 'Request More Info'];
+  return <section className="workspace-grid"><div className="panel xl"><h3>Case Review / Final Determination</h3><p className="muted">Decision buttons appear here only after evidence review.</p>{options.map(o => <button key={o} className={`decision ${s.finalDecision === o ? 'active' : ''}`} onClick={() => patch({ finalDecision: o })}>{o}</button>)}<button disabled={!s.finalDecision} onClick={complete}>Confirm Final Decision</button></div><CoachCard title="QA Review" text="QA evaluates process, evidence reviewed, documentation, and reasoning. It does not reward guessing an answer early." /></section>;
+}
+
+function LunaAI({ current }) {
+  return <section className="workspace-grid"><div className="panel xl"><h3>Luna AI Mentor</h3><p>Luna explains, coaches, and drafts. Luna does not solve the case early.</p><Prompt text={`What should I compare in a ${current?.type} case?`} /><Prompt text="Help me write a neutral investigation summary from reviewed evidence." /><Prompt text="What evidence should I review next without giving me the answer?" /></div><CoachCard title="Guardrail" text="Luna cannot label evidence as fraud, reveal hidden evidence, skip steps, or make the final decision during active investigation." /></section>;
+}
+
+function FraudLibrary() {
+  return <section className="library-grid">{CLAIMS.map(c => <div className="panel" key={c}><h3>{c}</h3><p>{claimPlaybook[c].short}</p><h4>Evidence to Review</h4>{claimPlaybook[c].evidence.slice(0, 4).map(e => <span className="topic" key={e}>{e}</span>)}</div>)}</section>;
+}
+
+function LearningPaths() {
+  return <section className="library-grid">{CLAIMS.map((c, i) => <div className="panel" key={c}><h3>{c} Path</h3><p>Lessons, labs, practice cases, Luna coaching, and debrief examples.</p><div className="progress"><div style={{ width: `${15 + (i % 5) * 15}%` }} /></div></div>)}</section>;
+}
+
+function Workspace({ title, question, current, addDocs, docs, children }) {
+  return <section className="workspace-grid"><div className="panel xl"><p className="eyebrow">{question}</p><h3>{title}</h3><CaseSnapshot c={current} />{children}<button onClick={() => addDocs(docs)}>Add Related Evidence</button></div><CoachCard title="Does this make sense?" text="Review facts, records, timelines, and context. Do not label evidence before the final review step." /></section>;
+}
+
+function CaseSnapshot({ c }) {
+  if (!c) return <p>No active case.</p>;
+  return <div className="snapshot"><Info k="Case ID" v={c.id} /><Info k="Claim Type" v={c.type} /><Info k="Customer / Party" v={c.customer} /><Info k="Amount" v={`$${c.amount.toLocaleString()}`} /><Info k="Review Status" v={c.priority} /><Info k="Summary" v={c.summary} /></div>;
+}
+
+function Info({ k, v }) { return <div className="info-row"><b>{k}</b><span>{v}</span></div>; }
+function Metric({ label, value }) { return <div className="metric"><span>{label}</span><b>{value}</b></div>; }
+function RecordList({ items }) { return <div>{items.map(([k, v]) => <Info key={k} k={k} v={v} />)}</div>; }
+function TimelineItem({ time, label }) { return <div className="timeline-item"><span>{time}</span><b>{label}</b></div>; }
+function Checklist({ items, checked = [], done }) { return <div>{items.map((x, i) => <div className="check" key={x}><span>{checked.includes(x) || (done && i < done) ? '✓' : '○'}</span>{x}</div>)}</div>; }
+function CoachCard({ title, text }) { return <aside className="coach-card"><h3>{title}</h3><p>{text}</p></aside>; }
+function Prompt({ text }) { return <button className="prompt">{text}</button>; }
+function countByClaim(cases) { return cases.reduce((acc, c) => ({ ...acc, [c.type]: (acc[c.type] || 0) + 1 }), {}); }
