@@ -1,30 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import FeatureArchitect from './FeatureArchitect.jsx';
 
-const STORE = 'fraud-academy-v20-design-rebuild';
-const OLD_STORE = 'fraud-academy-v16-feature-architect';
+const STORE = 'fraud-academy-v21-stable-build';
 
 const SIDEBAR = [
-  { id: 'Dashboard', icon: '⌂', label: 'Dashboard' },
-  { id: 'Case Queue', icon: '▤', label: 'Case Queue' },
-  { id: 'Case Briefing', icon: '▣', label: 'Case Briefing' },
-  { id: 'Customer 360', icon: '♙', label: 'Customer 360' },
-  { id: 'Identity Intel', icon: '⌕', label: 'Identity Intel' },
-  { id: 'Login History', icon: '▧', label: 'Login History' },
-  { id: 'Device Intel', icon: '▱', label: 'Device Intel' },
-  { id: 'Financial Investigation', icon: '$', label: 'Financial Investigation' },
-  { id: 'Business Intelligence', icon: '▥', label: 'Business Intelligence' },
-  { id: 'Bank Account Verification', icon: '◈', label: 'Bank Account Verification' },
-  { id: 'Evidence Center', icon: '▰', label: 'Evidence Center' },
-  { id: 'Customer Contact & Interview', icon: '✆', label: 'Customer Contact & Interview' },
-  { id: 'Timeline Builder', icon: '◷', label: 'Timeline Builder' },
-  { id: 'Investigation Workspace', icon: '✦', label: 'Investigation Workspace' },
-  { id: 'Investigation Summary', icon: '✎', label: 'Investigation Summary' },
-  { id: 'Case Review', icon: '✓', label: 'Case Review' },
-  { id: 'Luna AI', icon: '☾', label: 'Luna AI' },
-  { id: 'Fraud Library', icon: '◇', label: 'Fraud Library' },
-  { id: 'Learning Paths', icon: '☆', label: 'Learning Paths' },
-];
+  ['Dashboard', '⌂'], ['Case Queue', '▤'], ['Case Briefing', '▣'], ['Customer 360', '♙'],
+  ['Identity Intel', '⌕'], ['Login History', '▧'], ['Device Intel', '▱'], ['Financial Investigation', '$'],
+  ['Business Intelligence', '▥'], ['Bank Account Verification', '◈'], ['Evidence Center', '▰'], ['Customer Contact & Interview', '✆'],
+  ['Timeline Builder', '◷'], ['Investigation Workspace', '✦'], ['Investigation Summary', '✎'], ['Case Review', '✓'],
+  ['Luna AI', '☾'], ['Fraud Library', '◇'], ['Learning Paths', '☆'],
+].map(([id, icon]) => ({ id, icon, label: id }));
 
 const CLAIMS = [
   'Account Takeover',
@@ -44,27 +29,14 @@ const CLAIMS = [
   'ACH Fraud',
 ];
 
-const people = [
-  'Jessica Marie Johnson',
-  'Olivia M. Carter',
-  'Brandon T. Lewis',
-  'Riya K. Patel',
-  'Marcus D. Hill',
-  'Tiffany R. Anderson',
-  'David K. Wilson',
-  'Amy Nicole Davis',
-];
-
-const businesses = [
-  'Sunset Landscaping LLC',
-  'Crown Payroll Services',
-  'Velora Boutique',
-  'Metro Wireless',
-  'NorthStar Electronics',
-  'QuickShip Market',
-  'Luna Travel Group',
-  'Blue Orchid Supply Co.',
-];
+const defaultPlay = {
+  party: 'consumer',
+  short: 'A realistic fictional case needs evidence review before any conclusion.',
+  objective: 'Review records, compare timelines, and document what makes sense before final review.',
+  evidence: ['Customer Context', 'Identity Context', 'Digital Activity', 'Financial Activity', 'Documents', 'Timeline'],
+  docs: ['Case Intake', 'Account Snapshot', 'Evidence Packet', 'Timeline Record'],
+  briefing: ['Read the case first.', 'Gather evidence in the right workspace.', 'Save the final decision for Case Review.'],
+};
 
 const claimPlaybook = {
   'Account Takeover': {
@@ -155,7 +127,7 @@ const claimPlaybook = {
     docs: ['Wallet Enrollment Confirmation', 'Tokenization Record', 'Device Activity Report', 'MFA / OTP Record', 'Wallet Transaction Log'],
     briefing: ['Review whether wallet enrollment fits device history.', 'Compare MFA and login timeline.', 'Review wallet merchant activity.'],
   },
-  Money Mule: {
+  'Money Mule': {
     party: 'consumer',
     short: 'Account activity shows incoming funds followed by rapid movement or cash-out.',
     objective: 'Review incoming/outgoing transfer pattern, linked accounts, cash-out, recipient history, and relationship context.',
@@ -201,25 +173,37 @@ const finalOptions = {
   'Bust-Out Fraud': ['Restrict', 'Decline', 'Escalate', 'Request More Info', 'Credit Review'],
   'Ghost Employee Fraud': ['Hold Payroll', 'Reject Change', 'Escalate', 'Request Business Verification'],
   'Digital Wallet Fraud': ['Customer Claim Supported', 'Customer Claim Not Supported', 'More Review Needed', 'Escalate'],
-  Money Mule: ['Restrict Account', 'Escalate', 'Refer for Review', 'Request More Info'],
+  'Money Mule': ['Restrict Account', 'Escalate', 'Refer for Review', 'Request More Info'],
   'Vendor Fraud': ['Hold Payment', 'Approve Change', 'Reject Change', 'Escalate', 'Request Vendor Verification'],
   'Merchant Fraud': ['Customer Claim Supported', 'Merchant Evidence Supported', 'Insufficient Evidence', 'Escalate'],
   'ACH Fraud': ['Hold ACH', 'Return ACH', 'Approve ACH', 'Escalate', 'Request More Info'],
 };
 
+const names = ['Jessica Marie Johnson', 'Olivia M. Carter', 'Brandon T. Lewis', 'Riya K. Patel', 'Marcus D. Hill', 'Tiffany R. Anderson'];
+const companies = ['Sunset Landscaping LLC', 'Crown Payroll Services', 'Velora Boutique', 'Metro Wireless', 'NorthStar Electronics', 'Blue Orchid Supply Co.'];
+
+function suggestedNext(type) {
+  if (type.includes('BEC') || type.includes('Vendor') || type.includes('Ghost') || type.includes('Payroll') || type.includes('ACH')) return 'Bank Account Verification';
+  if (type.includes('Synthetic')) return 'Identity Intel';
+  if (type.includes('Wallet') || type.includes('Account Takeover')) return 'Login History';
+  if (type.includes('Check')) return 'Evidence Center';
+  if (type.includes('Bust') || type.includes('Credit')) return 'Financial Investigation';
+  return 'Customer 360';
+}
+
 function makeCase(i) {
   const type = CLAIMS[i % CLAIMS.length];
-  const play = claimPlaybook[type];
-  const person = people[i % people.length];
-  const business = businesses[i % businesses.length];
-  const owner = play.party === 'business' || play.party === 'merchant' ? business : person;
+  const play = claimPlaybook[type] || defaultPlay;
+  const person = names[i % names.length];
+  const company = companies[i % companies.length];
+  const customer = ['business', 'merchant'].includes(play.party) ? company : person;
   return {
-    id: `CASE-2026-${String(i + 4871).padStart(6, '0')}`,
+    id: `CASE-2026-${String(4871 + i).padStart(6, '0')}`,
     type,
     party: play.party,
-    customer: owner,
+    customer,
     person,
-    business,
+    business: company,
     amount: Math.round(240 + ((i * 773) % 24800)),
     priority: i % 5 === 0 ? 'Review Priority' : i % 3 === 0 ? 'Needs Follow-Up' : 'Needs Review',
     difficulty: ['Level 1', 'Level 2', 'Level 3', 'Level 4'][i % 4],
@@ -233,7 +217,7 @@ function makeCase(i) {
     phone: `(555) 867-${String(5309 + i).slice(-4)}`,
     email: `${person.toLowerCase().replaceAll(' ', '.')}@examplemail.com`,
     address: `${1200 + i * 37} Maple Drive, Dallas, TX 7520${i % 9}`,
-    profileId: `CUST-${String(400000 + i * 97)}`,
+    profileId: `CUST-${400000 + i * 97}`,
     accountAge: `${2 + (i % 8)} yrs ${i % 11} mos`,
     relationship: `${1 + (i % 9)} years`,
     device: `DEV-${90000 + i * 41}`,
@@ -241,15 +225,6 @@ function makeCase(i) {
     bankAccount: `****-${String(6789 + i).slice(-4)}`,
     next: suggestedNext(type),
   };
-}
-
-function suggestedNext(type) {
-  if (type.includes('BEC') || type.includes('Vendor') || type.includes('Ghost') || type.includes('Payroll') || type.includes('ACH')) return 'Bank Account Verification';
-  if (type.includes('Synthetic')) return 'Identity Intel';
-  if (type.includes('Wallet') || type.includes('Account Takeover')) return 'Login History';
-  if (type.includes('Check')) return 'Evidence Center';
-  if (type.includes('Bust') || type.includes('Credit')) return 'Financial Investigation';
-  return 'Customer 360';
 }
 
 function baseState() {
@@ -272,9 +247,8 @@ function baseState() {
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORE)) || JSON.parse(localStorage.getItem(OLD_STORE));
-    if (!saved) return baseState();
-    return { ...baseState(), ...saved, architectOpen: false, featureIdeas: saved.featureIdeas || [] };
+    const saved = JSON.parse(localStorage.getItem(STORE));
+    return saved ? { ...baseState(), ...saved, architectOpen: false } : baseState();
   } catch {
     return baseState();
   }
@@ -284,15 +258,13 @@ export default function App() {
   const [s, setS] = useState(loadState);
   const current = useMemo(() => s.cases.find(x => x.id === s.selectedId) || s.cases[0] || s.lastClosed, [s.cases, s.selectedId, s.lastClosed]);
 
-  useEffect(() => {
-    localStorage.setItem(STORE, JSON.stringify({ ...s, architectOpen: false }));
-  }, [s]);
+  useEffect(() => localStorage.setItem(STORE, JSON.stringify({ ...s, architectOpen: false })), [s]);
 
   const patch = update => setS(prev => ({ ...prev, ...update }));
-  const go = page => setS(prev => ({ ...prev, page, reviewed: pageReview(prev.reviewed, page) }));
-  const mark = item => setS(prev => ({ ...prev, reviewed: pageReview(prev.reviewed, item) }));
+  const go = page => setS(prev => ({ ...prev, page, reviewed: markReviewed(prev.reviewed, page) }));
+  const mark = item => setS(prev => ({ ...prev, reviewed: markReviewed(prev.reviewed, item) }));
+  const addDocs = docs => setS(prev => ({ ...prev, docs: [...new Set([...prev.docs, ...docs])], page: 'Evidence Center', reviewed: markReviewed(prev.reviewed, 'Evidence Center') }));
   const addNote = text => setS(prev => ({ ...prev, notes: [{ text, at: new Date().toLocaleTimeString() }, ...prev.notes] }));
-  const addDocs = docs => setS(prev => ({ ...prev, docs: [...new Set([...prev.docs, ...docs])], page: 'Evidence Center', reviewed: pageReview(prev.reviewed, 'Evidence Center') }));
   const addContact = text => setS(prev => ({ ...prev, contacts: [{ text, at: new Date().toLocaleTimeString() }, ...prev.contacts] }));
   const selectCase = id => setS(prev => ({ ...prev, selectedId: id, page: 'Case Briefing', reviewed: [], notes: [], docs: [], contacts: [], finalDecision: '' }));
   const saveIdea = idea => setS(prev => ({ ...prev, featureIdeas: [idea, ...(prev.featureIdeas || [])] }));
@@ -304,66 +276,54 @@ export default function App() {
     setS(prev => ({ ...prev, cases: remaining, selectedId: remaining[0]?.id || '', completed: [closed, ...prev.completed], lastClosed: closed, page: 'Investigation Summary', reviewed: [], notes: [], docs: [], contacts: [], finalDecision: '' }));
   };
 
-  const props = { s, current, patch, go, mark, addNote, addDocs, addContact, selectCase, complete };
+  const props = { s, current, patch, go, mark, addDocs, addNote, addContact, selectCase, complete };
 
-  return (
-    <div className="app-shell">
-      <Sidebar s={s} current={current} go={go} />
-      <main className="workspace-main">
-        <TopBar s={s} current={current} patch={patch} />
-        {s.page === 'Dashboard' && <Dashboard {...props} />}
-        {s.page === 'Case Queue' && <CaseQueue {...props} />}
-        {s.page === 'Case Briefing' && <CaseBriefing {...props} />}
-        {s.page === 'Customer 360' && <Customer360 {...props} />}
-        {s.page === 'Identity Intel' && <IdentityIntel {...props} />}
-        {s.page === 'Login History' && <LoginHistory {...props} />}
-        {s.page === 'Device Intel' && <DeviceIntel {...props} />}
-        {s.page === 'Financial Investigation' && <FinancialInvestigation {...props} />}
-        {s.page === 'Business Intelligence' && <BusinessIntelligence {...props} />}
-        {s.page === 'Bank Account Verification' && <BankAccountVerification {...props} />}
-        {s.page === 'Evidence Center' && <EvidenceCenter {...props} />}
-        {s.page === 'Customer Contact & Interview' && <CustomerContact {...props} />}
-        {s.page === 'Timeline Builder' && <TimelineBuilder {...props} />}
-        {s.page === 'Investigation Workspace' && <InvestigationWorkspace {...props} />}
-        {s.page === 'Investigation Summary' && <InvestigationSummary {...props} />}
-        {s.page === 'Case Review' && <CaseReview {...props} />}
-        {s.page === 'Luna AI' && <LunaAI {...props} />}
-        {s.page === 'Fraud Library' && <FraudLibrary {...props} />}
-        {s.page === 'Learning Paths' && <LearningPaths {...props} />}
-      </main>
-      <MobileNav s={s} go={go} />
-      <button className="architect-fab" onClick={() => patch({ architectOpen: true })}>✨<span>New Upgrade Idea</span></button>
-      <FeatureArchitect open={s.architectOpen} ideas={s.featureIdeas || []} onClose={() => patch({ architectOpen: false })} onSave={saveIdea} onDelete={deleteIdea} />
-    </div>
-  );
+  return <div className="app-shell">
+    <Sidebar s={s} current={current} go={go} />
+    <main className="workspace-main">
+      <TopBar s={s} current={current} patch={patch} />
+      {s.page === 'Dashboard' && <Dashboard {...props} />}
+      {s.page === 'Case Queue' && <CaseQueue {...props} />}
+      {s.page === 'Case Briefing' && <CaseBriefing {...props} />}
+      {s.page === 'Customer 360' && <Customer360 {...props} />}
+      {s.page === 'Identity Intel' && <EvidenceWorkspace title="Identity Intel" question="Who is this person, business, employee, vendor, or profile connected to?" docs={['Identity Summary', 'Address History', 'Phone / Email Age', 'Public Records']} {...props} />}
+      {s.page === 'Login History' && <EvidenceWorkspace title="Login History" question="Does this login activity make sense for the customer and case?" docs={['Login Activity Report', 'MFA / OTP Record', 'Admin Portal Log']} {...props} />}
+      {s.page === 'Device Intel' && <EvidenceWorkspace title="Device Intel" question="Does this device make sense for this customer, employee, vendor, or session?" docs={['Device Activity Report', 'Wallet Enrollment Record', 'Device Comparison']} {...props} />}
+      {s.page === 'Financial Investigation' && <EvidenceWorkspace title="Financial Investigation" question="Does the money make sense?" docs={['Financial Activity Report', 'Transfer Timeline', 'Deposit Review']} {...props} />}
+      {s.page === 'Business Intelligence' && <EvidenceWorkspace title="Business Intelligence" question="Does this business activity make sense?" docs={['Business Profile', 'Website Review', 'Public Records']} {...props} />}
+      {s.page === 'Bank Account Verification' && <EvidenceWorkspace title="Bank Account Verification" question="Does this bank account make sense for this setup or payment change?" docs={['Bank Account Verification', 'Ownership Link Review', 'Verification Attempt Log']} {...props} />}
+      {s.page === 'Evidence Center' && <EvidenceCenter {...props} />}
+      {s.page === 'Customer Contact & Interview' && <CustomerContact {...props} />}
+      {s.page === 'Timeline Builder' && <TimelineBuilder {...props} />}
+      {s.page === 'Investigation Workspace' && <InvestigationWorkspace {...props} />}
+      {s.page === 'Investigation Summary' && <InvestigationSummary {...props} />}
+      {s.page === 'Case Review' && <CaseReview {...props} />}
+      {s.page === 'Luna AI' && <LunaAI {...props} />}
+      {s.page === 'Fraud Library' && <FraudLibrary />}
+      {s.page === 'Learning Paths' && <LearningPaths />}
+    </main>
+    <MobileNav s={s} go={go} />
+    <button className="architect-fab" onClick={() => patch({ architectOpen: true })}>✨<span>New Upgrade Idea</span></button>
+    <FeatureArchitect open={s.architectOpen} ideas={s.featureIdeas || []} onClose={() => patch({ architectOpen: false })} onSave={saveIdea} onDelete={deleteIdea} />
+  </div>;
 }
 
-function pageReview(list, page) {
+function markReviewed(list, page) {
   if (['Dashboard', 'Case Queue', 'Luna AI', 'Fraud Library', 'Learning Paths'].includes(page)) return list;
   return [...new Set([...list, page])];
 }
 
 function Sidebar({ s, current, go }) {
-  return (
-    <aside className="global-sidebar">
-      <div className="brand-lockup">
-        <div className="brand-mark">FA</div>
-        <div><h1>Fraud Academy</h1><p>Investigator Workspace</p></div>
-      </div>
-      <nav className="sidebar-nav">
-        {SIDEBAR.map(item => <button key={item.id} onClick={() => go(item.id)} className={s.page === item.id ? 'active' : ''}><span>{item.icon}</span>{item.label}</button>)}
-      </nav>
-      <div className="luna-card"><div className="luna-cat">🐈‍⬛</div><b>Luna AI Mentor</b><p>Evidence first. Conclusions later.</p></div>
-      <button className="current-case-card" onClick={() => go('Case Briefing')}>
-        <span>Current Case</span><b>{current?.id || 'Queue Clear'}</b><small>{current?.type || 'No active case'}</small>
-      </button>
-    </aside>
-  );
+  return <aside className="global-sidebar">
+    <div className="brand-lockup"><div className="brand-mark">FA</div><div><h1>Fraud Academy</h1><p>Investigator Workspace</p></div></div>
+    <nav className="sidebar-nav">{SIDEBAR.map(item => <button key={item.id} onClick={() => go(item.id)} className={s.page === item.id ? 'active' : ''}><span>{item.icon}</span>{item.label}</button>)}</nav>
+    <div className="luna-card"><div className="luna-cat">🐈‍⬛</div><b>Luna AI Mentor</b><p>Evidence first. Conclusions later.</p></div>
+    <button className="current-case-card" onClick={() => go('Case Briefing')}><span>Current Case</span><b>{current?.id || 'Queue Clear'}</b><small>{current?.type || 'No active case'}</small></button>
+  </aside>;
 }
 
 function MobileNav({ s, go }) {
-  const items = SIDEBAR.slice(0, 6);
-  return <div className="mobile-nav">{items.map(x => <button key={x.id} className={s.page === x.id ? 'active' : ''} onClick={() => go(x.id)}><span>{x.icon}</span><small>{x.label.split(' ')[0]}</small></button>)}</div>;
+  return <div className="mobile-nav">{SIDEBAR.slice(0, 6).map(x => <button key={x.id} className={s.page === x.id ? 'active' : ''} onClick={() => go(x.id)}><span>{x.icon}</span><small>{x.label.split(' ')[0]}</small></button>)}</div>;
 }
 
 function TopBar({ s, current, patch }) {
@@ -371,21 +331,13 @@ function TopBar({ s, current, patch }) {
 }
 
 function Dashboard({ s, current, go }) {
-  const counts = countByClaim(s.cases);
   return <section className="dash-grid">
-    <HeroCard title="Good evening, Ree" subtitle="Ready to solve another case without giving away the answer?" action="Continue Investigation" onAction={() => go('Investigation Workspace')} />
-    <div className="stat-row"><Stat label="Active Cases" value={s.cases.length} /><Stat label="Closed Cases" value={s.completed.length} /><Stat label="Workspaces Reviewed" value={s.reviewed.length} /><Stat label="Expanded Claim Types" value={CLAIMS.length} /></div>
+    <div className="hero-card"><div><p className="eyebrow">Luna says ✨</p><h2>Good evening, Ree</h2><p>Ready to solve another case without giving away the answer?</p></div><button onClick={() => go('Investigation Workspace')}>Continue Investigation</button></div>
+    <div className="stat-row"><Stat label="Active Cases" value={s.cases.length} /><Stat label="Closed Cases" value={s.completed.length} /><Stat label="Workspaces Reviewed" value={s.reviewed.length} /><Stat label="Claim Types" value={CLAIMS.length} /></div>
     <div className="panel active-case"><h3>Active Case</h3><CaseSnapshot c={current} /><div className="button-row"><button onClick={() => go('Case Briefing')}>Case Briefing</button><button onClick={() => go(current?.next || 'Customer 360')}>Suggested Next</button></div></div>
-    <div className="panel"><h3>Case Mix</h3>{Object.entries(counts).slice(0, 8).map(([type, count]) => <div className="mini-row" key={type}><span>{type}</span><b>{count}</b></div>)}</div>
     <div className="panel"><h3>Daily Goals</h3><Checklist items={['Review evidence before conclusions', 'Use neutral labels', 'Draft summary from reviewed records', 'Save one Luna coaching insight']} done={s.reviewed.length} /></div>
   </section>;
 }
-
-function HeroCard({ title, subtitle, action, onAction }) {
-  return <div className="hero-card"><div><p className="eyebrow">Luna says ✨</p><h2>{title}</h2><p>{subtitle}</p></div><button onClick={onAction}>{action}</button></div>;
-}
-
-function Stat({ label, value }) { return <div className="stat-card"><span>{label}</span><b>{value}</b></div>; }
 
 function CaseQueue({ s, current, patch, selectCase }) {
   const filtered = s.filter === 'All Cases' ? s.cases : s.cases.filter(c => c.type === s.filter);
@@ -397,46 +349,11 @@ function CaseBriefing({ current, go }) {
 }
 
 function Customer360({ current, addDocs, go }) {
-  return <section className="customer360"><div className="customer-profile panel"><div className="avatar">{current?.customer?.[0] || 'C'}</div><h3>{current?.customer}</h3><p>{current?.profileId}</p><span className="status-pill">Active Customer</span><Info k="Customer Since" v="2017" /><Info k="Relationship" v={current?.relationship} /><Info k="Products" v="Checking · Savings · Card" /><Info k="Channel" v={current?.channel} /></div><div className="panel"><h3>Relationship Overview</h3><div className="metric-grid"><Metric label="Prior Claims" value="4" /><Metric label="Verified Phone" value="Yes" /><Metric label="Verified Email" value="Yes" /><Metric label="Account Age" value={current?.accountAge} /></div><h4>Contact Information</h4><Info k="Phone" v={current?.phone} /><Info k="Email" v={current?.email} /><Info k="Address" v={current?.address} /></div><div className="panel"><h3>Profile Change Timeline</h3>{['Password updated', 'Phone number updated', 'Email address updated', 'MFA enabled', 'Secure message sent'].map((x, i) => <TimelineItem key={x} label={x} time={`07/0${i + 1}/2026 · ${9 + i}:1${i} AM`} />)}<button onClick={() => addDocs(['Profile Change Timeline', 'Customer Snapshot'])}>Add Profile Evidence</button></div><div className="panel"><h3>Current Case Snapshot</h3><CaseSnapshot c={current} /><button onClick={() => go('Identity Intel')}>Go to Identity Intel</button></div></section>;
+  return <section className="customer360"><div className="customer-profile panel"><div className="avatar">{current?.customer?.[0] || 'C'}</div><h3>{current?.customer}</h3><p>{current?.profileId}</p><span className="status-pill">Active Customer</span><Info k="Customer Since" v="2017" /><Info k="Relationship" v={current?.relationship} /><Info k="Products" v="Checking · Savings · Card" /><Info k="Channel" v={current?.channel} /></div><div className="panel"><h3>Relationship Overview</h3><div className="metric-grid"><Metric label="Prior Claims" value="4" /><Metric label="Verified Phone" value="Yes" /><Metric label="Verified Email" value="Yes" /><Metric label="Account Age" value={current?.accountAge} /></div><h4>Contact Information</h4><Info k="Phone" v={current?.phone} /><Info k="Email" v={current?.email} /><Info k="Address" v={current?.address} /></div><div className="panel"><h3>Profile Change Timeline</h3>{['Password updated', 'Phone number updated', 'Email address updated', 'MFA enabled', 'Secure message sent'].map((x, i) => <TimelineItem key={x} label={x} time={`07/0${i + 1}/2026`} />)}<button onClick={() => addDocs(['Profile Change Timeline', 'Customer Snapshot'])}>Add Profile Evidence</button></div><div className="panel"><h3>Current Case Snapshot</h3><CaseSnapshot c={current} /><button onClick={() => go('Identity Intel')}>Go to Identity Intel</button></div></section>;
 }
 
-function IdentityIntel({ current, addDocs }) {
-  const synthetic = current?.type === 'Synthetic Identity';
-  return <Workspace title="Identity Intel" question="Who is this person, business, employee, vendor, or profile connected to?" current={current} addDocs={addDocs} docs={['Identity Summary', 'Address History', 'Phone / Email Age', 'Public Records', 'Business Links']}>
-    <div className="search-card"><h3>People Search & Intelligence</h3><div className="input-row"><input value={current?.profileId || ''} readOnly /><button>Run Search</button></div><p className="muted">Search by SSN/ID, name + DOB, phone, email, business, employee, vendor, or merchant relationship.</p></div>
-    <RecordList items={[['Identity Depth', synthetic ? 'Limited public-record depth; needs review' : 'Multiple historical records returned'], ['Address History', 'Current and previous addresses returned'], ['Phone / Email Age', synthetic ? 'Newer contact points in training record' : 'Longstanding contact points'], ['Business Links', current?.business], ['Associates', 'Fictional household and business links']]} />
-  </Workspace>;
-}
-
-function LoginHistory({ current, addDocs }) {
-  return <Workspace title="Login History" question="Does this login activity make sense for the customer and case?" current={current} addDocs={addDocs} docs={['Login Activity Report', 'MFA / OTP Record', 'Admin Portal Log']}>
-    <RecordList items={[['Successful Login', `Dallas, TX · Known browser · ${current?.device}`], ['New Session', `${current?.ip} · First seen for this case`], ['MFA Event', 'OTP challenge completed'], ['Profile Event', 'Contact update near case timeline'], ['Portal Context', current?.party === 'business' ? 'Business or payroll portal access' : 'Mobile banking access']]} />
-  </Workspace>;
-}
-
-function DeviceIntel({ current, addDocs }) {
-  return <Workspace title="Device Intel" question="Does this device make sense for the customer, employee, vendor, or session?" current={current} addDocs={addDocs} docs={['Device Activity Report', 'Wallet Enrollment Record', 'Device Comparison']}>
-    <RecordList items={[['Device Fingerprint', current?.device], ['First Seen', 'During current case timeline'], ['Browser', 'Mobile Safari training record'], ['Timezone / Language', 'Central time / English'], ['Device Links', 'Linked to case profile and selected session'], ['Wallet Context', current?.type.includes('Wallet') ? 'Wallet enrollment attached' : 'No wallet enrollment in selected packet']]} />
-  </Workspace>;
-}
-
-function FinancialInvestigation({ current, addDocs }) {
-  return <Workspace title="Financial Investigation" question="Does the money make sense?" current={current} addDocs={addDocs} docs={['Financial Activity Report', 'Transfer Timeline', 'Deposit Review']}>
-    <div className="metric-grid"><Metric label="Case Amount" value={`$${current?.amount.toLocaleString()}`} /><Metric label="Account Age" value={current?.accountAge} /><Metric label="Movement" value="Timeline Review" /><Metric label="Linked Accounts" value="2" /></div>
-    <RecordList items={[['Deposit Behavior', current?.type.includes('Check') ? 'Check deposit and hold timeline available' : 'Recurring deposit pattern available'], ['Cash / Transfer Activity', current?.type === 'Money Mule' ? 'Incoming funds followed by outgoing movement' : 'Activity requires timeline comparison'], ['ACH / Wallet', current?.type.includes('ACH') || current?.type.includes('Wallet') ? 'Claim-specific payment rail records available' : 'No special payment rail selected'], ['Credit Context', current?.type.includes('Credit') || current?.type.includes('Bust') ? 'Utilization and repayment trend required' : 'Credit view optional']]} />
-  </Workspace>;
-}
-
-function BusinessIntelligence({ current, addDocs }) {
-  return <Workspace title="Business Intelligence" question="Does this business activity make sense?" current={current} addDocs={addDocs} docs={['Business Profile', 'Website Review', 'Public Records', 'Verification Attempts']}>
-    <RecordList items={[['Business Name', current?.business], ['Public Record', 'Active registration in fictional SOS record'], ['Website / Online Presence', 'Website, domain, and reviews available'], ['Location Logic', 'Compare address, service area, employee/vendor location'], ['Verification Attempts', current?.party === 'business' ? 'Business contact required' : 'Optional for this case']]} />
-  </Workspace>;
-}
-
-function BankAccountVerification({ current, addDocs }) {
-  return <Workspace title="Bank Account Verification" question="Does this bank account make sense for this setup or payment change?" current={current} addDocs={addDocs} docs={['Bank Account Verification', 'Ownership Link Review', 'Verification Attempt Log']}>
-    <RecordList items={[['Bank Name', 'Neon Federal Bank'], ['Masked Account', current?.bankAccount], ['Account Type', current?.type.includes('Payroll') || current?.type.includes('Vendor') ? 'Business checking / payroll destination' : 'Consumer checking'], ['Open Date', '03/14/2021'], ['First Seen', 'Current case timeline'], ['Ownership Link', 'Name/business match requires review'], ['Prior Payment Use', current?.type.includes('Vendor') ? 'New vendor payment destination' : 'Limited prior use']]} />
-  </Workspace>;
+function EvidenceWorkspace({ title, question, current, addDocs, docs }) {
+  return <section className="workspace-grid"><div className="panel xl"><p className="eyebrow">{question}</p><h3>{title}</h3><CaseSnapshot c={current} /><div className="metric-grid"><Metric label="Case Amount" value={`$${current?.amount.toLocaleString()}`} /><Metric label="Account Age" value={current?.accountAge} /><Metric label="Review Status" value={current?.priority} /><Metric label="Suggested Next" value={current?.next} /></div>{current?.evidence.map(e => <div className="evidence-line" key={e}>✦ {e}</div>)}<button onClick={() => addDocs(docs)}>Add Related Evidence</button></div><CoachCard title="Does this make sense?" text="Review facts, records, timelines, and context. Do not label evidence before the final review step." /></section>;
 }
 
 function EvidenceCenter({ current, s, addDocs }) {
@@ -445,26 +362,26 @@ function EvidenceCenter({ current, s, addDocs }) {
 }
 
 function CustomerContact({ current, addContact }) {
-  return <section className="workspace-grid"><div className="panel xl"><h3>Initial Contact / Claim Intake</h3><RecordList items={[['Channel', current?.channel], ['Initial Statement', current?.summary], ['Contact Type', current?.party === 'business' ? 'Business / vendor / payroll contact' : 'Customer contact'], ['Follow-Up Needed', ['Account Takeover', 'Email Fraud / BEC', 'Payroll Fraud / Direct Deposit Diversion', 'Synthetic Identity', 'Ghost Employee Fraud'].includes(current?.type) ? 'Yes, targeted questions available' : 'Use intake and documents first']]} /><button onClick={() => addContact(`Intake reviewed for ${current?.type}`)}>Mark Intake Reviewed</button></div><CoachCard title="Interview Rule" text="Not every claim needs a forced interview. Use intake records, secure messages, dispute forms, merchant contact, and follow-up questions only when needed." /></section>;
+  return <section className="workspace-grid"><div className="panel xl"><h3>Initial Contact / Claim Intake</h3><Info k="Channel" v={current?.channel} /><Info k="Initial Statement" v={current?.summary} /><Info k="Contact Type" v={current?.party === 'business' ? 'Business / vendor / payroll contact' : 'Customer contact'} /><Info k="Follow-Up" v="Use targeted follow-up only when evidence calls for it." /><button onClick={() => addContact(`Intake reviewed for ${current?.type}`)}>Mark Intake Reviewed</button></div><CoachCard title="Interview Rule" text="Not every claim needs a forced interview. Use intake records, secure messages, dispute forms, merchant contact, and follow-up questions only when needed." /></section>;
 }
 
 function TimelineBuilder({ current }) {
-  const events = ['Case received', 'Profile or relationship record reviewed', ...current.evidence.slice(0, 4), 'Document request / evidence packet generated', 'Investigation summary drafted'];
-  return <section className="panel xl"><h3>Timeline Builder</h3><p className="muted">What happened first, and how do events connect?</p><div className="timeline">{events.map((e, i) => <TimelineItem key={e} label={e} time={`Step ${i + 1}`} />)}</div></section>;
+  const events = ['Case received', 'Profile or relationship record reviewed', ...(current?.evidence || []).slice(0, 4), 'Evidence packet generated', 'Investigation summary drafted'];
+  return <section className="panel xl"><h3>Timeline Builder</h3><p className="muted">What happened first, and how do events connect?</p><div className="timeline">{events.map((e, i) => <TimelineItem key={`${e}-${i}`} label={e} time={`Step ${i + 1}`} />)}</div></section>;
 }
 
 function InvestigationWorkspace({ current, s, go, addNote }) {
-  return <section className="workspace-grid"><div className="panel xl"><h3>Investigation Workspace</h3><CaseSnapshot c={current} /><h4>Workspace Progress</h4><Checklist items={['Customer 360', 'Identity Intel', 'Login History', 'Device Intel', 'Financial Investigation', 'Evidence Center', 'Timeline Builder']} checked={s.reviewed} /><div className="button-row">{current?.evidence.map(x => <button key={x} onClick={() => addNote(`Reviewed ${x} for ${current.type}`)}>{x}</button>)}</div></div><div className="panel"><h3>Suggested Next</h3><p>{current?.next}</p><button onClick={() => go(current?.next || 'Customer 360')}>Open Workspace</button><h3>AI Case Summary Draft</h3><p className="muted">Luna will draft the summary from reviewed evidence. Investigator edits and approves later.</p></div></section>;
+  return <section className="workspace-grid"><div className="panel xl"><h3>Investigation Workspace</h3><CaseSnapshot c={current} /><h4>Workspace Progress</h4><Checklist items={['Customer 360', 'Identity Intel', 'Login History', 'Device Intel', 'Financial Investigation', 'Evidence Center', 'Timeline Builder']} checked={s.reviewed} /><div className="button-row">{current?.evidence.map(x => <button key={x} onClick={() => addNote(`Reviewed ${x} for ${current.type}`)}>{x}</button>)}</div></div><div className="panel"><h3>Suggested Next</h3><p>{current?.next}</p><button onClick={() => go(current?.next || 'Customer 360')}>Open Workspace</button><h3>AI Case Summary Draft</h3><p className="muted">Luna drafts from reviewed evidence. Investigator edits and approves later.</p></div></section>;
 }
 
 function InvestigationSummary({ s, current, go }) {
   const c = s.lastClosed || current;
-  return <section className="panel xl"><h3>Investigation Summary Draft</h3><p className="muted">AI-assisted, not AI-controlled. The investigator owns the final summary.</p><div className="summary-box"><p><b>Claim Type:</b> {c?.type}</p><p><b>What was checked:</b> {(c?.reviewed || s.reviewed).join(', ') || 'No reviewed evidence recorded yet.'}</p><p><b>Findings:</b> Records were reviewed for consistency across customer, identity, digital, financial, document, and timeline context.</p><p><b>Decision / Action:</b> {c?.finalDecision || 'Pending Case Review'}</p><p><b>Short explanation:</b> Evidence should be documented using neutral language and routed to Case Review for the final outcome.</p></div><button onClick={() => go('Case Review')}>Go to Case Review</button></section>;
+  return <section className="panel xl"><h3>Investigation Summary Draft</h3><p className="muted">AI-assisted, not AI-controlled.</p><div className="summary-box"><p><b>Claim Type:</b> {c?.type}</p><p><b>What was checked:</b> {(c?.reviewed || s.reviewed).join(', ') || 'No reviewed evidence recorded yet.'}</p><p><b>Findings:</b> Records were reviewed for consistency across customer, identity, digital, financial, document, and timeline context.</p><p><b>Decision / Action:</b> {c?.finalDecision || 'Pending Case Review'}</p><p><b>Short explanation:</b> Evidence should be documented using neutral language and routed to Case Review.</p></div><button onClick={() => go('Case Review')}>Go to Case Review</button></section>;
 }
 
 function CaseReview({ s, current, patch, complete }) {
   const options = finalOptions[current?.type] || ['More Review Needed', 'Escalate', 'Request More Info'];
-  return <section className="workspace-grid"><div className="panel xl"><h3>Case Review / Final Determination</h3><p className="muted">Decision buttons appear here only after evidence review.</p>{options.map(o => <button key={o} className={`decision ${s.finalDecision === o ? 'active' : ''}`} onClick={() => patch({ finalDecision: o })}>{o}</button>)}<button disabled={!s.finalDecision} onClick={complete}>Confirm Final Decision</button></div><CoachCard title="QA Review" text="QA evaluates process, evidence reviewed, documentation, and reasoning. It does not reward guessing an answer early." /></section>;
+  return <section className="workspace-grid"><div className="panel xl"><h3>Case Review / Final Determination</h3><p className="muted">Decision buttons appear here only after evidence review.</p>{options.map(o => <button key={o} className={`decision ${s.finalDecision === o ? 'active' : ''}`} onClick={() => patch({ finalDecision: o })}>{o}</button>)}<button disabled={!s.finalDecision} onClick={complete}>Confirm Final Decision</button></div><CoachCard title="QA Review" text="QA evaluates process, evidence reviewed, documentation, and reasoning. It does not reward guessing early." /></section>;
 }
 
 function LunaAI({ current }) {
@@ -472,27 +389,18 @@ function LunaAI({ current }) {
 }
 
 function FraudLibrary() {
-  return <section className="library-grid">{CLAIMS.map(c => <div className="panel" key={c}><h3>{c}</h3><p>{claimPlaybook[c].short}</p><h4>Evidence to Review</h4>{claimPlaybook[c].evidence.slice(0, 4).map(e => <span className="topic" key={e}>{e}</span>)}</div>)}</section>;
+  return <section className="library-grid">{CLAIMS.map(c => <div className="panel" key={c}><h3>{c}</h3><p>{(claimPlaybook[c] || defaultPlay).short}</p><h4>Evidence to Review</h4>{(claimPlaybook[c] || defaultPlay).evidence.slice(0, 4).map(e => <span className="topic" key={e}>{e}</span>)}</div>)}</section>;
 }
 
 function LearningPaths() {
   return <section className="library-grid">{CLAIMS.map((c, i) => <div className="panel" key={c}><h3>{c} Path</h3><p>Lessons, labs, practice cases, Luna coaching, and debrief examples.</p><div className="progress"><div style={{ width: `${15 + (i % 5) * 15}%` }} /></div></div>)}</section>;
 }
 
-function Workspace({ title, question, current, addDocs, docs, children }) {
-  return <section className="workspace-grid"><div className="panel xl"><p className="eyebrow">{question}</p><h3>{title}</h3><CaseSnapshot c={current} />{children}<button onClick={() => addDocs(docs)}>Add Related Evidence</button></div><CoachCard title="Does this make sense?" text="Review facts, records, timelines, and context. Do not label evidence before the final review step." /></section>;
-}
-
-function CaseSnapshot({ c }) {
-  if (!c) return <p>No active case.</p>;
-  return <div className="snapshot"><Info k="Case ID" v={c.id} /><Info k="Claim Type" v={c.type} /><Info k="Customer / Party" v={c.customer} /><Info k="Amount" v={`$${c.amount.toLocaleString()}`} /><Info k="Review Status" v={c.priority} /><Info k="Summary" v={c.summary} /></div>;
-}
-
+function Stat({ label, value }) { return <div className="stat-card"><span>{label}</span><b>{value}</b></div>; }
 function Info({ k, v }) { return <div className="info-row"><b>{k}</b><span>{v}</span></div>; }
 function Metric({ label, value }) { return <div className="metric"><span>{label}</span><b>{value}</b></div>; }
-function RecordList({ items }) { return <div>{items.map(([k, v]) => <Info key={k} k={k} v={v} />)}</div>; }
 function TimelineItem({ time, label }) { return <div className="timeline-item"><span>{time}</span><b>{label}</b></div>; }
 function Checklist({ items, checked = [], done }) { return <div>{items.map((x, i) => <div className="check" key={x}><span>{checked.includes(x) || (done && i < done) ? '✓' : '○'}</span>{x}</div>)}</div>; }
 function CoachCard({ title, text }) { return <aside className="coach-card"><h3>{title}</h3><p>{text}</p></aside>; }
 function Prompt({ text }) { return <button className="prompt">{text}</button>; }
-function countByClaim(cases) { return cases.reduce((acc, c) => ({ ...acc, [c.type]: (acc[c.type] || 0) + 1 }), {}); }
+function CaseSnapshot({ c }) { if (!c) return <p>No active case.</p>; return <div className="snapshot"><Info k="Case ID" v={c.id} /><Info k="Claim Type" v={c.type} /><Info k="Customer / Party" v={c.customer} /><Info k="Amount" v={`$${c.amount.toLocaleString()}`} /><Info k="Review Status" v={c.priority} /><Info k="Summary" v={c.summary} /></div>; }
