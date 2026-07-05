@@ -1,5 +1,6 @@
-// Simple in‑browser case generator (placeholder)
-// This will later be replaced by a richer generator that reads claim templates from the Training Matrix.
+// Simple case generator for Fraud Academy
+// Generates unlimited fictional cases deterministically (based on index) so we can lazy‑load more when the user scrolls or taps "Load More".
+// Later we will replace this with a richer generator that pulls templates from the Training Matrix.
 
 const names = [
   "Maya Carter",
@@ -9,6 +10,7 @@ const names = [
   "Alicia Monroe",
   "Keisha Grant",
 ];
+
 const types = [
   "Account Takeover",
   "First-Party Fraud",
@@ -16,6 +18,7 @@ const types = [
   "Email Fraud / BEC",
   "Credit Risk",
 ];
+
 const parties = [
   "NorthStar Electronics",
   "Velora Boutique",
@@ -25,7 +28,7 @@ const parties = [
   "QuickShip Market",
 ];
 
-function makeCase(i) {
+export function makeCase(i) {
   const type = types[i % types.length];
   const amount = Math.round(300 + ((i * 311) % 9500));
   return {
@@ -38,6 +41,7 @@ function makeCase(i) {
   };
 }
 
-export function generateCases(count = 12) {
-  return Array.from({ length: count }, (_, i) => makeCase(i));
+// Generate `count` cases starting from `offset` (0‑based)
+export function generateCases(count = 12, offset = 0) {
+  return Array.from({ length: count }, (_, idx) => makeCase(offset + idx));
 }
