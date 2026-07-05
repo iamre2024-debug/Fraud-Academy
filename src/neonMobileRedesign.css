@@ -1,0 +1,185 @@
+/* Fraud Academy neon mobile redesign layer
+   Inspired by the uploaded Login History mockup: glass phone cards, glowing magenta edges,
+   compact mobile-first panels, pill tabs, cute investigation charms, and stronger bottom navigation.
+   This file intentionally overrides presentation only. It does not change app data or workflows. */
+:root{
+  --fa-midnight:#03020a;
+  --fa-ink:#08031c;
+  --fa-card:#160738;
+  --fa-card-2:#220950;
+  --fa-pink:#ff42c7;
+  --fa-hot:#ff179b;
+  --fa-lav:#c47aff;
+  --fa-violet:#7f38ff;
+  --fa-cyan:#73ecff;
+  --fa-good:#54f6a7;
+  --fa-warn:#ffb84d;
+  --fa-text:#fff8ff;
+  --fa-soft:#d9c1ff;
+  --fa-border:rgba(255,108,220,.34);
+  --fa-glow:0 0 18px rgba(255,66,199,.42),0 0 46px rgba(127,56,255,.22);
+}
+
+body{
+  background:
+    radial-gradient(circle at 48% -10%,rgba(255,66,199,.20),transparent 34%),
+    radial-gradient(circle at 92% 8%,rgba(115,236,255,.15),transparent 24%),
+    radial-gradient(circle at 10% 88%,rgba(127,56,255,.22),transparent 30%),
+    linear-gradient(180deg,#020106 0%,#07021c 48%,#020106 100%);
+}
+
+.app-shell:before{
+  content:"✦  ♡  ☾  ✧  🐾  ✦";
+  position:fixed;
+  top:12px;
+  left:50%;
+  z-index:1;
+  transform:translateX(-50%);
+  color:#ffd1f4;
+  opacity:.35;
+  letter-spacing:16px;
+  pointer-events:none;
+  text-shadow:0 0 14px rgba(255,66,199,.8);
+}
+
+.global-sidebar,.panel,.hero-card,.stat-card,.coach-card,.document-viewer,.dash-hero,.cute-stat,.dash-main-card,.dash-bottom-card,.phone-card,.case-card,.luna-card,.current-case-card{
+  border-color:var(--fa-border) !important;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.025)),
+    radial-gradient(circle at 12% 0%,rgba(255,66,199,.18),transparent 36%),
+    linear-gradient(180deg,rgba(25,7,59,.96),rgba(8,3,26,.98)) !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.045),var(--fa-glow),0 24px 70px rgba(0,0,0,.44) !important;
+}
+
+.brand-lockup h1,.topbar h2,.login-phone h2,.dash-hero h2{
+  color:var(--fa-text);
+  text-shadow:0 0 8px rgba(255,255,255,.35),0 0 22px rgba(255,66,199,.55);
+}
+
+.brand-mark,.cute-stat span,.avatar,.portrait-img{
+  background:radial-gradient(circle at 28% 18%,#ffe3f8 0 12%,var(--fa-pink) 28%,var(--fa-violet) 72%,#25105a 100%) !important;
+  border:1px solid rgba(255,211,247,.72);
+  box-shadow:0 0 18px rgba(255,66,199,.65),0 0 42px rgba(127,56,255,.38) !important;
+}
+
+.sidebar-nav button,.tabs button,.mobile-nav button,.quick-pill,.topic,.status-pill,.doc-chip,.pill,.soft-btn{
+  border-color:rgba(255,128,224,.26) !important;
+  background:rgba(255,255,255,.055);
+  box-shadow:inset 0 0 18px rgba(255,66,199,.035);
+}
+
+.sidebar-nav button:hover,.sidebar-nav button.active,.tabs button.active,.mobile-nav button.active,.decision.active{
+  background:linear-gradient(135deg,rgba(255,23,155,.75),rgba(127,56,255,.55)) !important;
+  border-color:rgba(255,194,241,.72) !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.10),0 0 22px rgba(255,66,199,.55),inset 0 0 18px rgba(255,255,255,.10) !important;
+}
+
+.hero-card button,.button-row button,.panel>button,.document-viewer button,.decision,.prompt,.run-search,.dash-main-card button,.dash-bottom-card button,.phone-card button,.customer-action-bar button,.architect-fab{
+  background:linear-gradient(135deg,var(--fa-pink),var(--fa-violet)) !important;
+  border:1px solid rgba(255,213,246,.48) !important;
+  box-shadow:0 0 18px rgba(255,66,199,.46),0 10px 28px rgba(0,0,0,.28) !important;
+}
+
+.evidence-line,.check,.timeline-item,.login-row,.report-row,.summary-box,.metric,.search-input{
+  border-color:rgba(255,128,224,.20) !important;
+  background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.035)) !important;
+  box-shadow:inset 0 0 22px rgba(127,56,255,.08);
+}
+
+.login-mobile-shell{
+  align-items:start;
+}
+.phone-card{
+  position:relative;
+  border-radius:34px !important;
+  outline:1px solid rgba(255,66,199,.26);
+}
+.phone-card:after{
+  content:"☁  ✦  ♡";
+  position:absolute;
+  right:18px;
+  top:48px;
+  color:#ffd6f3;
+  opacity:.72;
+  filter:drop-shadow(0 0 10px rgba(255,66,199,.75));
+}
+.login-row span{
+  border-radius:999px;
+  box-shadow:0 0 16px rgba(84,246,167,.20);
+}
+.login-row:nth-of-type(odd) span{
+  box-shadow:0 0 16px rgba(255,66,199,.22);
+}
+
+.document-viewer{
+  background:linear-gradient(180deg,#fff2fb,#ead7ff) !important;
+  border-color:rgba(255,147,226,.86) !important;
+}
+
+@media(max-width:820px){
+  body{background:#020106;}
+  .app-shell{padding:0 0 92px;}
+  .global-sidebar{
+    position:fixed;
+    inset:10px 10px auto;
+    z-index:20;
+    height:auto;
+    padding:10px 12px;
+    border-radius:26px;
+    backdrop-filter:blur(18px);
+  }
+  .brand-lockup{margin:0;justify-content:center;}
+  .brand-mark{width:38px;height:38px;border-radius:14px;}
+  .brand-lockup h1{font-size:1.08rem;}
+  .brand-lockup p,.sidebar-nav,.top-actions,.eyebrow + h2 + .muted{display:none;}
+  .workspace-main{
+    max-width:430px;
+    margin:0 auto;
+    padding:86px 10px 112px;
+  }
+  .topbar{
+    position:sticky;
+    top:72px;
+    z-index:10;
+    margin:0 0 10px;
+    padding:10px 12px;
+    border:1px solid var(--fa-border);
+    border-radius:24px;
+    background:rgba(11,3,33,.72);
+    backdrop-filter:blur(18px);
+    box-shadow:var(--fa-glow);
+  }
+  .topbar h2{font-size:1.65rem;line-height:1.05;}
+  .panel,.hero-card,.stat-card,.coach-card,.document-viewer,.dash-hero,.cute-stat,.dash-main-card,.dash-bottom-card,.phone-card,.case-card{
+    border-radius:24px !important;
+    padding:13px !important;
+  }
+  .dashboard-polish,.workspace-grid,.queue-layout,.evidence-layout,.identity-workspace,.customer360{
+    gap:10px !important;
+  }
+  .dash-hero{min-height:128px;}
+  .dash-hero h2{font-size:2.25rem;}
+  .dash-stats,.stat-row,.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px;}
+  .cute-stat{min-height:104px;}
+  .cute-stat b{font-size:1.45rem;}
+  .customer-action-bar{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px;}
+  .mobile-nav{
+    left:10px;right:10px;bottom:10px;
+    max-width:430px;margin:auto;
+    grid-template-columns:repeat(5,1fr) !important;
+    border-radius:28px;
+    background:rgba(8,3,28,.86) !important;
+    border-color:rgba(255,108,220,.32) !important;
+    box-shadow:0 0 0 1px rgba(255,255,255,.055),0 0 28px rgba(255,66,199,.38),0 18px 60px rgba(0,0,0,.58) !important;
+  }
+  .mobile-nav button:nth-child(n+6){display:none;}
+  .mobile-nav button{border-radius:18px;padding:8px 2px;}
+  .mobile-nav small{font-size:.62rem;}
+  .architect-fab{right:18px;bottom:84px;border-radius:20px;width:54px;height:54px;justify-content:center;padding:0;}
+  .architect-fab span{display:none;}
+}
+
+@media(min-width:821px){
+  .workspace-main{max-width:1380px;}
+  .global-sidebar{backdrop-filter:blur(20px);}
+}
