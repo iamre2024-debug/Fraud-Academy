@@ -1,5 +1,18 @@
 # Fraud Academy Changelog
 
+## 2026-07-06
+
+### Added
+- Upgraded `Customer 360` inside `src/App.jsx` with tabbed sections for Overview, Account History, Devices, Locations, Accounts, Prior Fraud, Contact History, Behavior, and Notes.
+
+### Improved
+- Customer 360 now keeps the existing purple/pink command-center layout while making customer context easier to review one investigation area at a time.
+- Added direct action paths from Customer 360 tabs into Device Intel, Login History, Customer Contact & Interview, Financial Investigation, and Evidence Center.
+- Added neutral investigator reminders so Customer 360 stays context-focused instead of making the final determination early.
+
+### Current Next Step
+Upgrade Identity Intel with tabbed results: Overview, Addresses, Phones, Emails, Associates, Applications, Alerts, and Documents.
+
 ## 2026-07-05
 
 ### Added
