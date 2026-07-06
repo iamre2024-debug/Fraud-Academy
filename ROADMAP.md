@@ -21,7 +21,7 @@ When the user says **run**, run the Fraud Academy Builder workflow:
 - [x] Expand Customer 360 with relationship, behavior, devices, locations, contact history, prior fraud, and profile-change summary.
 - [x] Make active Toolkit selection visibly highlighted with stronger styling without changing the layout.
 - [x] Expand Document Viewer 2.0 with more document-specific templates for every requested record.
-- [ ] Upgrade Customer 360 with tabs or collapsible sections: Overview, Account History, Devices, Locations, Accounts, Prior Fraud, Contact History, Behavior, and Notes.
+- [x] Upgrade Customer 360 with tabs or collapsible sections: Overview, Account History, Devices, Locations, Accounts, Prior Fraud, Contact History, Behavior, and Notes.
 - [ ] Upgrade Identity Intel with tabbed results: Overview, Addresses, Phones, Emails, Associates, Applications, Alerts, and Documents.
 - [ ] Upgrade Interview into a deeper branching conversation by claim type.
 - [ ] Improve Case Debrief so it references the exact flags, tools, documents, and interview answers the user reviewed.
@@ -43,4 +43,4 @@ Fraud Academy should feel like a fictional internal bank fraud investigator work
 - Business Verification / KYB
 
 ## Next Builder Step
-Keep the layout as-is. Next, upgrade Customer 360 with tabs or collapsible sections: Overview, Account History, Devices, Locations, Accounts, Prior Fraud, Contact History, Behavior, and Notes.
+Keep the layout as-is. Next, upgrade Identity Intel with tabbed results: Overview, Addresses, Phones, Emails, Associates, Applications, Alerts, and Documents.
