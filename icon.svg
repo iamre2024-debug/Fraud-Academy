@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fraud Academy icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4dc4"/>
+      <stop offset="1" stop-color="#7b5cff"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#100719"/>
+  <path d="M256 70 116 128v102c0 91 57 173 140 212 83-39 140-121 140-212V128L256 70Z" fill="url(#g)"/>
+  <path d="M185 248h142v38H185zM185 318h100v38H185zM185 178h142v38H185z" fill="#fff7ff"/>
+  <circle cx="350" cy="350" r="58" fill="#100719" stroke="#fff7ff" stroke-width="20"/>
+  <path d="m391 391 45 45" stroke="#fff7ff" stroke-width="24" stroke-linecap="round"/>
+</svg>
