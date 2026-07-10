@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './styles.css';
 import './fraudAcademyTheme.css';
+import './workspace.css';
 import './approvalGuardrails.js';
 
 createRoot(document.getElementById('root')).render(
