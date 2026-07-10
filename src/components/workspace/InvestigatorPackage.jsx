@@ -1,11 +1,7 @@
-import { useState } from 'react';
-
-export default function InvestigatorPackage({ current, selectedTools, notes, onNotesChange, onSubmit, submitted }) {
-  const [decision, setDecision] = useState('');
-
+export default function InvestigatorPackage({ current, selectedTools, notes, decision, onNotesChange, onDecisionChange, onSubmit, submitted }) {
   function submit(event) {
     event.preventDefault();
-    if (!decision || !notes.trim()) return;
+    if (!decision || !notes.trim() || selectedTools.length === 0) return;
     onSubmit({ decision, notes: notes.trim(), selectedTools });
   }
 
@@ -24,14 +20,14 @@ export default function InvestigatorPackage({ current, selectedTools, notes, onN
         rows={7}
       />
       <label htmlFor="case-decision">Final review decision</label>
-      <select id="case-decision" value={decision} onChange={(event) => setDecision(event.target.value)}>
+      <select id="case-decision" value={decision} onChange={(event) => onDecisionChange(event.target.value)}>
         <option value="">Choose after evidence review</option>
         <option>Claim Supported</option>
         <option>Claim Not Supported</option>
         <option>More Review Needed</option>
         <option>Escalate</option>
       </select>
-      <button type="submit" disabled={!decision || !notes.trim() || submitted}>
+      <button type="submit" disabled={!decision || !notes.trim() || selectedTools.length === 0 || submitted}>
         {submitted ? 'Package Submitted ✓' : 'Submit Investigator Package'}
       </button>
     </form>
