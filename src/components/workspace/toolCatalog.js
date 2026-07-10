@@ -10,17 +10,10 @@ export const LANE_DEFINITIONS = [
   { id: 'documents', label: 'Evidence / Timeline', question: 'What has been documented, how do events connect, and what still needs verification?' },
 ];
 
-const LANE_ALIASES = {
-  'identity-reporting': 'customer-context',
-  'payment-verification': 'money-movement',
-  decision: 'documents',
-};
+const LANE_ALIASES = { 'identity-reporting': 'customer-context', 'payment-verification': 'money-movement', decision: 'documents' };
+const normalizeLane = (lane) => LANE_ALIASES[lane] || lane;
 
-function normalizeLane(lane) {
-  return LANE_ALIASES[lane] || lane;
-}
-
-function toLane(definition, tools) {
+function toLane(definition, tools, recommendedIds) {
   return {
     ...definition,
     tools: tools.map((tool) => ({
@@ -30,23 +23,22 @@ function toLane(definition, tools) {
       requiresSearch: tool.requiresSearch,
       searchKeys: tool.searchKeys,
       reportDepth: tool.reportDepth,
+      recommended: recommendedIds.has(tool.id),
     })),
   };
 }
 
 export function getToolLanes(caseItem) {
-  const claimTools = getToolsForClaim(caseItem?.type);
-  const claimIds = new Set(claimTools.map((tool) => tool.id));
-  const available = toolRegistry.filter((tool) => claimIds.has(tool.id));
-
+  const recommendedIds = new Set(getToolsForClaim(caseItem?.type).map((tool) => tool.id));
   return LANE_DEFINITIONS.map((definition) => {
-    const laneTools = available.filter((tool) => normalizeLane(tool.lane) === definition.id);
-    return toLane(definition, laneTools);
+    const laneTools = toolRegistry.filter((tool) => normalizeLane(tool.lane) === definition.id);
+    return toLane(definition, laneTools, recommendedIds);
   }).filter((lane) => lane.tools.length > 0);
 }
 
 export function getDefaultLane(caseItem, lanes = getToolLanes(caseItem)) {
   const next = String(caseItem?.next || '').toLowerCase();
-  const matched = lanes.find((lane) => lane.tools.some((tool) => tool.label.toLowerCase() === next));
-  return matched?.id || lanes[0]?.id || 'customer-context';
+  const exact = lanes.find((lane) => lane.tools.some((tool) => tool.label.toLowerCase() === next));
+  const recommended = lanes.find((lane) => lane.tools.some((tool) => tool.recommended));
+  return exact?.id || recommended?.id || lanes[0]?.id || 'customer-context';
 }
