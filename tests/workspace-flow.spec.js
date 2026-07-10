@@ -24,12 +24,26 @@ test('generates and opens a case immediately without refresh', async ({ page }) 
   await expect(page.getByText(/CASE-GEN-\d{6}/).first()).toBeVisible();
 });
 
-test('submitting an investigator package updates Luna and Academy progress', async ({ page }) => {
+test('draft investigation work stays with its case', async ({ page }) => {
+  await page.getByRole('button', { name: /CASE-ATO-001/ }).click();
+  await page.getByRole('button', { name: /Customer 360/ }).click();
+  await page.getByLabel('Investigator notes').fill('Saved ATO draft notes.');
+  await page.getByRole('button', { name: 'Case Queue' }).click();
+  await page.getByRole('button', { name: /CASE-FPF-002/ }).click();
+  await page.getByRole('button', { name: 'Case Queue' }).click();
+  await page.getByRole('button', { name: /CASE-ATO-001/ }).click();
+  await expect(page.getByLabel('Investigator notes')).toHaveValue('Saved ATO draft notes.');
+  await expect(page.getByRole('button', { name: /Customer 360/ })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('submitting a package closes the case and updates Academy Progress', async ({ page }) => {
   await page.getByRole('button', { name: /CASE-ATO-001/ }).click();
   await page.getByRole('button', { name: /Customer 360/ }).click();
   await page.getByLabel('Investigator notes').fill('Reviewed access, profile change, and customer context records.');
   await page.getByLabel('Final review decision').selectOption({ label: 'More Review Needed' });
   await page.getByRole('button', { name: 'Submit Investigator Package' }).click();
-  await expect(page.getByRole('button', { name: 'Package Submitted ✓' })).toBeVisible();
-  await expect(page.getByText('Packages submitted: 1')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Academy Progress' })).toBeVisible();
+  await expect(page.getByText('CASE-ATO-001', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Case Queue' }).click();
+  await expect(page.getByRole('button', { name: /CASE-ATO-001/ })).toHaveCount(0);
 });
