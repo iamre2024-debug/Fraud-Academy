@@ -6,15 +6,17 @@ export default function ToolPanel({ lane, selectedTools, onToggleTool }) {
       <p>{lane.question}</p>
       <div className="tool-grid">
         {lane.tools.map((tool) => {
-          const selected = selectedTools.includes(tool);
+          const selected = selectedTools.includes(tool.id);
           return (
             <button
-              key={tool}
+              key={tool.id}
               type="button"
               className={`doc-chip ${selected ? 'active' : ''}`}
-              onClick={() => onToggleTool(tool)}
+              onClick={() => onToggleTool(tool.id)}
+              aria-pressed={selected}
             >
-              <span>{selected ? '✓' : '＋'}</span> {tool}
+              <span>{selected ? '✓' : '＋'}</span> {tool.label}
+              <small>{tool.requiresSearch ? 'Search required' : 'Context tool'} · {tool.reportDepth}</small>
             </button>
           );
         })}
