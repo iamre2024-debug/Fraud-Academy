@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const builtInCases = ['CASE-ATO-001', 'CASE-FPF-002', 'CASE-VND-003'];
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 });
